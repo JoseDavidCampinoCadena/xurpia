@@ -1,4 +1,4 @@
-
+import Navbar from '@/components/Navbar';
 
 export const metadata = {
   title: 'Next.js',
@@ -11,7 +11,8 @@ export default function RootLayout({ children }) {
       <head>
         <title>Xurp Ia</title>
       </head>
-      <body>
+      <body className='bg-[#011021]'>
+        <Navbar></Navbar>
         {children}
       </body>
     </html>
