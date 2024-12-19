@@ -41,9 +41,12 @@ export default function Navbar() {
         </button>
         </Link>
         
+        <Link href="/login">
         <button className="text-s text-green-500 px-3 py-2">
           Ingresar
         </button>
+        </Link>
+        
       </div>
     </nav>
   );
