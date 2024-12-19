@@ -12,7 +12,7 @@ export default function Navbar() {
       {/* Navigation Links */}
       <ul className="flex gap-4 text-white font-medium text-sm">
         <li>
-          <Link href="#Home" className="hover:text-green-400">
+          <Link href="/" className="hover:text-green-400">
             Home
           </Link>
         </li>
@@ -35,9 +35,12 @@ export default function Navbar() {
 
       {/* Action Buttons */}
       <div className="space-x-3">
+        <Link href="/register">
         <button className="text-s text-white hover:text-green-400 transition">
           Registrarse
         </button>
+        </Link>
+        
         <button className="text-s text-green-500 px-3 py-2">
           Ingresar
         </button>
