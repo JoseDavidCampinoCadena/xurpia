@@ -2,11 +2,11 @@ import Link from 'next/link';
 
 export default function Navbar() {
   return (
-    <nav className="flex justify-between items-center px-6 py-4 mx-6 mt-4 bg-[#212525] backdrop-blur-md rounded-full shadow-md">
+    <nav className="flex justify-between items-center px-6 py-4 mx-6 mt-4  backdrop-blur-md rounded-full ">
       {/* Logo */}
       <h1 className="text-xl font-bold">
         <span className="text-white">XURP</span>{' '}
-        <span className="bg-black text-green-500 px-2 py-1 rounded-full">IA</span>
+        <span className=" text-green-500 px-2 py-1 rounded-full">IA</span>
       </h1>
 
       {/* Navigation Links */}
@@ -36,13 +36,13 @@ export default function Navbar() {
       {/* Action Buttons */}
       <div className="space-x-3">
         <Link href="/register">
-        <button className="text-s text-white hover:text-green-400 transition">
+        <button className="text-sm px-3 py-2 bg-sky-700 rounded text-white hover:text-green-400 transition">
           Registrarse
         </button>
         </Link>
         
         <Link href="/login">
-        <button className="text-s text-green-500 px-3 py-2">
+        <button className="text-sm  bg-slate-700 rounded text-white hover:text-green-400 px-3 py-2">
           Ingresar
         </button>
         </Link>

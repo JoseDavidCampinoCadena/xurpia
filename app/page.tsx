@@ -1,56 +1,92 @@
 
 import './globals.css'
+import Image from 'next/image';
+import React from 'react';
+
 
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen  text-white">
+      
+      <section className="relative min-h-screen w-full overflow-hidden">
+      {/* Stars effect overlay */}
+      <div className="absolute inset-0 bg-[radial-gradient(white_1px,transparent_1px)] bg-[length:20px_20px] opacity-10"></div>
+      
+      {/* Content container */}
+      <main className="text-center px-8 py-12">
+          <h2 className="text-3xl font-extrabold leading-tight mb-6">
+            Bienvenido a <br />
+            <span className="text-green-500">Xurp IA</span>
+          </h2>
+          <p className="text-lg text-gray-400 mb-8">
+            Potenciando la colaboración en equipo
+          </p>
+          
+    <button className="bg-green-500 text-black px-3 py-2 text-sm font-bold rounded hover:bg-green-600">
+      Empezar
+    </button>
+  
+         
+          
+        </main>
+{/* Laptops mockup */}
+
+  <div className="relative mx-auto max-w-5xl">
+    {/* First laptop */}
+    <div className="absolute right-[8%] top-0 w-[45%] z-10">
+      <div className="aspect-[16/10] w-full rounded-lg">
+        <Image 
+          src="/images/pcUno.png"
+          alt="XURP IA Interface First View"
+          className="h-full w-full rounded-lg object-cover"
+          width={640}
+          height={400}
+          priority
+        />
+      </div>
+    </div>
+  
+    {/* Second laptop */}
+    <div className="absolute right-[35%] top-0 w-[45%]  z-0">
+      <div className="aspect-[16/10] w-full rounded-lg">
+        <Image
+          src="/images/pcdos.png"
+          alt="XURP IA Interface Second View"
+          className="h-full w-full rounded-lg object-cover"
+          width={640}
+          height={400}
+          priority
+        />
+      </div>
+    </div>
+  
+   
+  </div>
+
+  {/* Button moved inside container */}
+  
+
+    </section>
 
       <section id='#Home'>
-      <main className="text-center px-8 py-16">
-        <h2 className="text-5xl font-extrabold leading-tight mb-6">
-          Bienvenido a <br />
-          <span className="text-green-500">Xurp IA</span>
-        </h2>
-        <p className="text-lg text-gray-400 mb-8">
-          Potenciando la colaboración en equipo
-        </p>
-        <div className="flex justify-center gap-4">
-          <button className="bg-green-500 text-black px-6 py-3 text-lg font-bold rounded hover:bg-green-600">
-            Empezar
-          </button>
-        </div>
-      </main>
+        
 
-      <div className='flex items-center justify-center min-h-screen bg-black -mt-20'>
-    <div className='flex flex-col items-center justify-center bg-green-500 text-black p-4 w-[1000px] rounded-xl'>
-        <h1 className='font-semibold text-3xl'>PROGRAMACIÓN EN EQUIPO</h1>
-        <p className='text-center'>XURP IA es una plataforma que facilita la colaboración eficiente
-           en el mismo código, permitiendo a los equipos trabajar con equidad y transparencia.</p>
-        <img className='rounded-xl w-[600px] h-[600px] m-5' src="https://files.oaiusercontent.com/file-PpsjBcW9HfVTKMLHHuS5bQ?se=2024-12-15T18%3A50%3A36Z&sp=r&sv=2024-08-04&sr=b&rscc=max-age%3D604800%2C%20immutable%2C%20private&rscd=attachment%3B%20filename%3D786d5d1d-1282-47c1-8b88-85d32483008c.webp&sig=29sky/6ayAoDdhTZpIwOmUvGGfblC6OGSA1PD1N0ZbM%3D"/>
-    </div>
-</div>
-
-      <div className="w-full overflow-x-auto">
-        <ul className="flex gap-4 py-4 whitespace-nowrap">
-          <li className="bg-[#212525] rounded-xl p-5 ml-2 flex-shrink-0">CREA</li>
-          <li className="bg-[#212525] rounded-xl p-5 flex-shrink-0">COMPARTE</li>
-          <li className="bg-[#212525] rounded-xl p-5 flex-shrink-0">IA</li>
-          <li className="bg-[#212525] rounded-xl p-5 flex-shrink-0">ASIGNA</li>
-          <li className="bg-[#212525] rounded-xl p-5 flex-shrink-0">VISUALIZA</li>
-          <li className="bg-[#212525] rounded-xl p-5 flex-shrink-0">PROGRAMA</li>
-          <li className="bg-[#212525] rounded-xl p-5 flex-shrink-0">MEJORA</li>
-          <li className="bg-[#212525] rounded-xl p-5 flex-shrink-0">CREA</li>
-          <li className="bg-[#212525] rounded-xl p-5 flex-shrink-0">COMPARTE</li>
-          <li className="bg-[#212525] rounded-xl p-5 flex-shrink-0">IA</li>
-          <li className="bg-[#212525] rounded-xl p-5 flex-shrink-0">ASIGNA</li>
-          <li className="bg-[#212525] rounded-xl p-5 flex-shrink-0">VISUALIZA</li>
-          <li className="bg-[#212525] rounded-xl p-5 flex-shrink-0">PROGRAMA</li>
-          <li className="bg-[#212525] rounded-xl p-5 flex-shrink-0">MEJORA</li>
-          <li className="bg-[#212525] rounded-xl p-5 flex-shrink-0">CREA</li>
-          <li className="bg-[#212525] rounded-xl p-5 flex-shrink-0">COMPARTE</li>
-        </ul>
-      </div>
+    
+                    <div className="w-full overflow-hidden shadow-2xl">
+            <div className="inline-flex whitespace-nowrap animate-scroll">
+              {[...Array(8)].map((_, index) => ( // Increased from 4 to 8
+                <React.Fragment key={`list-${index}`}>
+                  <li className="inline-flex px-4 flex-shrink-0 transition-all duration-300">CREA</li>
+                  <li className="inline-flex px-4 flex-shrink-0 transition-all duration-300">COMPARTE</li>
+                  <li className="inline-flex px-4 flex-shrink-0 transition-all duration-300">IA</li>
+                  <li className="inline-flex px-4 flex-shrink-0 transition-all duration-300">ASIGNA</li>
+                  <li className="inline-flex px-4 flex-shrink-0 transition-all duration-300">VISUALIZA</li>
+                  <li className="inline-flex px-4 flex-shrink-0 transition-all duration-300">PROGRAMA</li>
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
 
       </section>
 
