@@ -49,9 +49,12 @@ const Login = () => {
         </a>
       </div>
 
+      <Link href="./home">
       <button className="w-full bg-green-400 text-white py-3 px-6 rounded-full font-semibold hover:bg-green-500 transition duration-300">
         Login
       </button>
+      </Link>
+      
 
       <p className="text-center text-sm text-gray-600 mt-4">
         ¿Necesitas una cuenta?{' '}

@@ -15,7 +15,7 @@ export default function HomePage() {
       
       {/* Content container */}
       <main className="text-center px-8 py-12">
-          <h2 className="text-3xl font-extrabold leading-tight mb-6">
+          <h2 className="text-6xl font-extrabold leading-tight mb-6">
             Bienvenido a <br />
             <span className="text-green-500">Xurp IA</span>
           </h2>
