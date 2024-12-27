@@ -30,7 +30,7 @@ function SideBar() {
             </div>
 
             <div className="NOTAS mt-3 mb-4">
-              <Link href="/notes" className="flex items-center py-2 px-4 rounded">
+              <Link href="/home/notes" className="flex items-center py-2 px-4 rounded">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="35"
