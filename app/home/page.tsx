@@ -1,10 +1,10 @@
 import React from 'react';
 import Link from 'next/link';
-import HomeLayout from './layout';
+
 
 export default function Home() {
   return (
-    <HomeLayout>
+  
       <div className="font-albert container mx-auto text-white p-6">
         <div className="input-buscar nav flex items-center justify-between mb-5">
           <div className="font-bold search flex w-full max-w-lg bg-[#343434] p-4 rounded-xl mr-3">
@@ -71,6 +71,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-    </HomeLayout>
+    
   );
 }
