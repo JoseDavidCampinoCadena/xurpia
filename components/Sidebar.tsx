@@ -6,12 +6,12 @@ function SideBar() {
     <div className="font-albert flex h-screen text-white">
       <div className="w-64 bg-black p-4 flex flex-col justify-between">
         <div>
-          <Link href="/Home" className="text-4xl font-bold text-green-400 mb-8 block text-center transform translate-y-4">
+          <Link href="/home" className="text-4xl font-bold text-green-400 mb-8 block text-center transform translate-y-4">
             XURP IA
           </Link>
           <div className="side-nav mb-10">
             <div className="INICIO mt-36">
-              <Link href="/Home" className="flex items-center py-2 px-4 rounded">
+              <Link href="/home" className="flex items-center py-2 px-4 rounded">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="35"
@@ -30,7 +30,7 @@ function SideBar() {
             </div>
 
             <div className="NOTAS mt-3 mb-4">
-              <Link href="/Notes" className="flex items-center py-2 px-4 rounded">
+              <Link href="/notes" className="flex items-center py-2 px-4 rounded">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="35"

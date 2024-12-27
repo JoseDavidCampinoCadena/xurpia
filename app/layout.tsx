@@ -6,7 +6,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
 
   // Rutas en las que no se debe mostrar el Navbar
-  const hideNavbarRoutes = ['/register', '/login', '/home'];
+  const hideNavbarRoutes = ['/register', '/login', '/home', '/notes'];
   const showNavbar = !hideNavbarRoutes.includes(pathname);
 
   // Clase de fondo condicional
