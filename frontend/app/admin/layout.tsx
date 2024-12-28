@@ -5,6 +5,7 @@ import AdminSidebar from './components/AdminSidebar';
 import AdminNotifications from './components/AdminNotifications';
 import ThemeToggle from '@/components/ThemeToggle';
 import { useTheme } from '@/app/contexts/ThemeContext';
+import LogoutButton from "../components/LogoutButton";
 
 export default function AdminLayout({
   children,
@@ -26,6 +27,9 @@ export default function AdminLayout({
             <AdminNotifications />
             <ThemeToggle />
           </div>
+        </div>
+        <div className="p-4 flex justify-end">
+          <LogoutButton />
         </div>
         {children}
       </main>
