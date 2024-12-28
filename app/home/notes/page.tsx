@@ -1,7 +1,10 @@
+'use client';
+
 import NotesClient from './NotesClient';
+import { useTheme } from '@/app/contexts/ThemeContext';
 
 // Aquí podrías tener funciones async para obtener datos iniciales
-async function getInitialNotes() {
+const getInitialNotes = () => {
   // Esto es un ejemplo - aquí normalmente harías una llamada a tu base de datos
   // o a una API externa usando fetch
   const initialNotes = [
@@ -20,14 +23,19 @@ async function getInitialNotes() {
   return initialNotes;
 }
 
-async function Notes() {
-  // Obtener las notas iniciales del servidor
-  const initialNotes = await getInitialNotes();
+function Notes() {
+  const { theme } = useTheme();
+  // Obtener las notas iniciales
+  const initialNotes = getInitialNotes();
 
   return (
     <div className="p-8 space-y-6">
-      <h2 className="text-3xl font-bold text-white">Notas:</h2>
-      <p className="text-gray-400">Aquí estarán todas tus tareas pendientes</p>
+      <h2 className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+        Notas:
+      </h2>
+      <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
+        Aquí estarán todas tus tareas pendientes
+      </p>
       
       {/* Pasamos las notas iniciales al componente cliente */}
       <NotesClient initialNotes={initialNotes} />

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BsBell } from 'react-icons/bs';
+import { useTheme } from '@/app/contexts/ThemeContext';
 
 interface Notification {
   id: number;
@@ -10,7 +11,9 @@ interface Notification {
 }
 
 const Notifications = () => {
+  const { theme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: 1,
@@ -34,6 +37,10 @@ const Notifications = () => {
     },
   ]);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   const markAsRead = (id: number) => {
@@ -42,12 +49,19 @@ const Notifications = () => {
     ));
   };
 
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <div className="relative">
-      {/* Botón de notificaciones */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-white hover:bg-zinc-700 rounded-full"
+        className={`relative p-2 rounded-full transition-colors ${
+          theme === 'dark'
+            ? 'text-gray-300 hover:text-white hover:bg-zinc-700'
+            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+        }`}
       >
         <BsBell size={20} />
         {unreadCount > 0 && (
@@ -57,27 +71,42 @@ const Notifications = () => {
         )}
       </button>
 
-      {/* Panel de notificaciones */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-zinc-800 rounded-lg shadow-lg z-50">
-          <div className="p-4 border-b border-zinc-700">
-            <h3 className="text-lg font-semibold text-white">Notificaciones</h3>
+        <div className={`absolute right-0 mt-2 w-80 rounded-lg shadow-lg z-50 ${
+          theme === 'dark' ? 'bg-zinc-800' : 'bg-white border border-gray-200'
+        }`}>
+          <div className={`p-4 border-b ${
+            theme === 'dark' ? 'border-zinc-700' : 'border-gray-200'
+          }`}>
+            <h3 className={`text-lg font-semibold ${
+              theme === 'dark' ? 'text-white' : 'text-gray-900'
+            }`}>
+              Notificaciones
+            </h3>
           </div>
           <div className="max-h-96 overflow-y-auto">
             {notifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`p-4 border-b border-zinc-700 hover:bg-zinc-700 cursor-pointer ${
-                  notification.isRead ? 'opacity-50' : ''
-                }`}
+                className={`p-4 border-b ${
+                  theme === 'dark'
+                    ? 'border-zinc-700 hover:bg-zinc-700'
+                    : 'border-gray-200 hover:bg-gray-50'
+                } cursor-pointer ${notification.isRead ? 'opacity-50' : ''}`}
                 onClick={() => markAsRead(notification.id)}
               >
                 <div className="flex items-start">
                   <div className="flex-1">
-                    <p className="text-sm text-white">{notification.message}</p>
+                    <p className={`text-sm ${
+                      theme === 'dark' ? 'text-white' : 'text-gray-900'
+                    }`}>
+                      {notification.message}
+                    </p>
                   </div>
                   {!notification.isRead && (
-                    <span className="w-2 h-2 bg-green-500 rounded-full mt-1"></span>
+                    <span className={`w-2 h-2 rounded-full mt-1 ${
+                      theme === 'dark' ? 'bg-green-500' : 'bg-green-600'
+                    }`} />
                   )}
                 </div>
               </div>

@@ -4,10 +4,17 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { FaHome, FaCalendar, FaTasks, FaBook, FaCog } from 'react-icons/fa';
 
+interface NavLink {
+  href?: string;
+  icon?: React.ReactNode;
+  text?: string;
+  type?: 'divider';
+}
+
 export default function Sidebar() {
   const pathname = usePathname();
 
-  const links = [
+  const links: NavLink[] = [
     { href: '/home', icon: <FaHome className="w-5 h-5" />, text: 'Inicio' },
     { href: '/home/calendar', icon: <FaCalendar className="w-5 h-5" />, text: 'Calendario' },
     { href: '/home/tasks', icon: <FaTasks className="w-5 h-5" />, text: 'Tareas' },
@@ -31,6 +38,8 @@ export default function Sidebar() {
           if (link.type === 'divider') {
             return <hr key={index} className="my-4 border-gray-200 dark:border-zinc-700" />;
           }
+          
+          if (!link.href) return null;
           
           return (
             <Link

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTheme } from '@/app/contexts/ThemeContext';
 
 interface Nota {
   id: number;
@@ -13,6 +14,7 @@ interface NotesClientProps {
 }
 
 const NotesClient = ({ initialNotes }: NotesClientProps) => {
+  const { theme } = useTheme();
   const [notas, setNotas] = useState(initialNotes);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [newText, setNewText] = useState('');
@@ -55,8 +57,12 @@ const NotesClient = ({ initialNotes }: NotesClientProps) => {
 
   return (
     <div className="p-8 space-y-6">
-      <h2 className="text-3xl font-bold text-white">Notas:</h2>
-      <p className="text-gray-400">Aquí estarán todas tus tareas pendientes</p>
+      <h2 className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+        Notas:
+      </h2>
+      <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
+        Aquí estarán todas tus tareas pendientes
+      </p>
 
       <div className="flex space-x-4 items-center">
         <input
@@ -64,11 +70,15 @@ const NotesClient = ({ initialNotes }: NotesClientProps) => {
           placeholder="Nueva nota"
           value={newNoteText}
           onChange={(e) => setNewNoteText(e.target.value)}
-          className="flex-grow bg-gray-700 p-2 rounded-md text-white placeholder-gray-400 focus:outline-none"
+          className={`flex-grow p-2 rounded-md placeholder-gray-400 focus:outline-none ${
+            theme === 'dark'
+              ? 'bg-gray-700 text-white'
+              : 'bg-white text-gray-900 border border-gray-200'
+          }`}
         />
         <button
           onClick={agregarNota}
-          className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
+          className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 font-medium"
         >
           Agregar
         </button>
@@ -78,18 +88,24 @@ const NotesClient = ({ initialNotes }: NotesClientProps) => {
         {notas.map((nota) => (
           <div
             key={nota.id}
-            className={`bg-zinc-800 rounded-lg p-4 shadow-lg text-white flex flex-col justify-between space-y-4 ${
-              nota.completado ? 'opacity-50' : ''
-            }`}
+            className={`rounded-lg p-4 shadow-sm flex flex-col justify-between space-y-4 ${
+              theme === 'dark' ? 'bg-zinc-800' : 'bg-white border border-gray-200'
+            } ${nota.completado ? 'opacity-50' : ''}`}
           >
             {editingId === nota.id ? (
               <textarea
-                className="bg-zinc-700 p-2 rounded-md text-white w-full resize-none"
+                className={`p-2 rounded-md w-full resize-none ${
+                  theme === 'dark'
+                    ? 'bg-zinc-700 text-white'
+                    : 'bg-gray-50 text-gray-900 border border-gray-200'
+                }`}
                 value={newText}
                 onChange={(e) => setNewText(e.target.value)}
               />
             ) : (
-              <p className="whitespace-pre-wrap">{nota.texto}</p>
+              <p className={`whitespace-pre-wrap ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                {nota.texto}
+              </p>
             )}
 
             <div className="flex justify-between items-center">
@@ -98,30 +114,34 @@ const NotesClient = ({ initialNotes }: NotesClientProps) => {
                   type="checkbox"
                   checked={nota.completado}
                   onChange={() => toggleCompletar(nota.id)}
-                  className="form-checkbox h-5 w-5 text-green-500 bg-gray-700 border-gray-600"
+                  className={`form-checkbox h-5 w-5 text-green-500 ${
+                    theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
+                  }`}
                 />
-                <span className="text-gray-300">Lista</span>
+                <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>
+                  Lista
+                </span>
               </label>
 
               <div className="flex space-x-2">
                 {editingId === nota.id ? (
                   <button
                     onClick={() => guardarNota(nota.id)}
-                    className="bg-green-500 text-white px-4 py-1 rounded-md hover:bg-green-600"
+                    className="bg-green-500 text-white px-4 py-1 rounded-md hover:bg-green-600 font-medium"
                   >
                     Guardar
                   </button>
                 ) : (
                   <button
                     onClick={() => editarNota(nota.id, nota.texto)}
-                    className="bg-blue-500 text-white px-4 py-1 rounded-md hover:bg-blue-600"
+                    className="bg-blue-500 text-white px-4 py-1 rounded-md hover:bg-blue-600 font-medium"
                   >
                     Editar
                   </button>
                 )}
                 <button
                   onClick={() => borrarNota(nota.id)}
-                  className="bg-red-500 text-white px-4 py-1 rounded-md hover:bg-red-600"
+                  className="bg-red-500 text-white px-4 py-1 rounded-md hover:bg-red-600 font-medium"
                 >
                   Borrar
                 </button>
