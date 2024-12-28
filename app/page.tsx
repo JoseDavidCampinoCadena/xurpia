@@ -2,9 +2,9 @@ import './globals.css'
 import Image from 'next/image';
 import React from 'react';
 
-
-
 export default function HomePage() {
+  const items = ['CREA', 'COMPARTE', 'IA', 'ASIGNA', 'VISUALIZA', 'PROGRAMA'];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a192f] via-[#0a192f] to-emerald-600 text-white">
       
@@ -22,73 +22,64 @@ export default function HomePage() {
             Potenciando la colaboración en equipo
           </p>
           
-    <button className="bg-green-500 text-black px-3 py-2 text-sm font-bold rounded hover:bg-green-600">
-      Empezar
-    </button>
-  
-         
-          
+          <button className="bg-green-500 text-black px-3 py-2 text-sm font-bold rounded hover:bg-green-600">
+            Empezar
+          </button>
         </main>
-{/* Laptops mockup */}
 
-  <div className="relative mx-auto max-w-5xl">
-    {/* First laptop */}
-    <div className="absolute right-[8%] top-0 w-[45%] z-10">
-      <div className="aspect-[16/10] w-full rounded-lg">
-        <Image 
-          src="/images/pcUno.png"
-          alt="XURP IA Interface First View"
-          className="h-full w-full rounded-lg object-cover"
-          width={640}
-          height={400}
-          priority
-        />
-      </div>
-    </div>
-  
-    {/* Second laptop */}
-    <div className="absolute right-[35%] top-0 w-[45%]  z-0">
-      <div className="aspect-[16/10] w-full rounded-lg">
-        <Image
-          src="/images/pcdos.png"
-          alt="XURP IA Interface Second View"
-          className="h-full w-full rounded-lg object-cover"
-          width={640}
-          height={400}
-          priority
-        />
-      </div>
-    </div>
-  
-   
-  </div>
-
-  {/* Button moved inside container */}
-  
-
-    </section>
-
-      <section id='#Home'>
+        {/* Laptops mockup */}
+        <div className="relative mx-auto max-w-5xl">
+          {/* First laptop */}
+          <div className="absolute right-[8%] top-0 w-[45%] z-10">
+            <div className="aspect-[16/10] w-full rounded-lg">
+              <Image 
+                src="/images/pcUno.png"
+                alt="XURP IA Interface First View"
+                className="h-full w-full rounded-lg object-cover"
+                width={640}
+                height={400}
+                priority
+              />
+            </div>
+          </div>
         
+          {/* Second laptop */}
+          <div className="absolute right-[35%] top-0 w-[45%] z-0">
+            <div className="aspect-[16/10] w-full rounded-lg">
+              <Image
+                src="/images/pcdos.png"
+                alt="XURP IA Interface Second View"
+                className="h-full w-full rounded-lg object-cover"
+                width={640}
+                height={400}
+                priority
+              />
+            </div>
+          </div>
+        </div>
+      </section>
 
-    
-                    <div className="w-full overflow-hidden shadow-2xl">
-            <div className="inline-flex whitespace-nowrap animate-scroll">
-              {[...Array(8)].map((_, index) => ( // Increased from 4 to 8
-                <React.Fragment key={`list-${index}`}>
-                  <li className="inline-flex px-4 flex-shrink-0 transition-all duration-300">CREA</li>
-                  <li className="inline-flex px-4 flex-shrink-0 transition-all duration-300">COMPARTE</li>
-                  <li className="inline-flex px-4 flex-shrink-0 transition-all duration-300">IA</li>
-                  <li className="inline-flex px-4 flex-shrink-0 transition-all duration-300">ASIGNA</li>
-                  <li className="inline-flex px-4 flex-shrink-0 transition-all duration-300">VISUALIZA</li>
-                  <li className="inline-flex px-4 flex-shrink-0 transition-all duration-300">PROGRAMA</li>
+      <section id='#Home' className="py-12">
+        <div className="relative w-full overflow-hidden bg-opacity-20 backdrop-blur-sm bg-black">
+          <div className="flex whitespace-nowrap">
+            <div className="animate-scroll">
+              {/* Repetimos los elementos 4 veces para asegurar una transición suave */}
+              {[...Array(4)].map((_, groupIndex) => (
+                <React.Fragment key={`group-${groupIndex}`}>
+                  {items.map((item, index) => (
+                    <div
+                      key={`item-${groupIndex}-${index}`}
+                      className="inline-flex px-6 py-3 text-xl font-bold text-white transition-colors duration-300 hover:text-green-400"
+                    >
+                      {item}
+                    </div>
+                  ))}
                 </React.Fragment>
               ))}
             </div>
           </div>
-
+        </div>
       </section>
-
 
       {/* Graphics Section */}
       <section className="relative flex justify-center items-center py-20">

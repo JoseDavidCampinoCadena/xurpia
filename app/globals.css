@@ -48,3 +48,18 @@
   }
 }
 
+@keyframes scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-50% - 0.5rem));
+  }
+}
+
+.animate-scroll {
+  animation: scroll 15s linear infinite;
+  display: inline-flex;
+  will-change: transform;
+}
+
