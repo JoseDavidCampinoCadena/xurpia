@@ -2,3 +2,49 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Rutas públicas (mantienen sus estilos fijos) */
+.public-route {
+  @apply bg-gradient-to-br from-[#0a192f] via-[#0a192f] to-emerald-600 text-white;
+}
+
+@layer components {
+  /* Por defecto: fondos claros, textos oscuros */
+  .card {
+    @apply bg-white border border-gray-200 shadow-sm
+           /* Modo oscuro */
+           dark:bg-zinc-800 dark:border-zinc-700;
+  }
+
+  .sidebar {
+    @apply w-64 min-h-screen
+           bg-white border-r border-gray-200
+           /* Modo oscuro */
+           dark:bg-zinc-900 dark:border-zinc-700;
+  }
+
+  .input {
+    @apply bg-white border border-gray-200 text-gray-900
+           /* Modo oscuro */
+           dark:bg-zinc-800 dark:border-zinc-700 dark:text-white;
+  }
+
+  /* Botones */
+  .btn-primary {
+    @apply bg-green-600 text-white hover:bg-green-700
+           /* Modo oscuro */
+           dark:bg-green-500 dark:hover:bg-green-600;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-100 text-gray-900 hover:bg-gray-200
+           /* Modo oscuro */
+           dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600;
+  }
+
+  .btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700
+           /* Modo oscuro */
+           dark:bg-red-500 dark:hover:bg-red-600;
+  }
+}
+

@@ -1,4 +1,3 @@
-
 import './globals.css'
 import Image from 'next/image';
 import React from 'react';
@@ -7,7 +6,7 @@ import React from 'react';
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen  text-white">
+    <div className="min-h-screen bg-gradient-to-br from-[#0a192f] via-[#0a192f] to-emerald-600 text-white">
       
       <section className="relative min-h-screen w-full overflow-hidden">
       {/* Stars effect overlay */}

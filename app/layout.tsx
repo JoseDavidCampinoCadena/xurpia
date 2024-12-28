@@ -1,27 +1,20 @@
 'use client';
 import Navbar from '@/components/Navbar';
 import { usePathname } from 'next/navigation';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-
-  // Rutas que deberían mostrar el Navbar (enfoque inclusivo en lugar de exclusivo)
-  const navbarRoutes = ['/', '/login', '/register'];
-  const showNavbar = navbarRoutes.includes(pathname);
-
-  // Clase de fondo condicional
-  const backgroundClass = pathname.startsWith('/home') 
-    ? 'bg-[#252527]' 
-    : 'bg-gradient-to-br from-[#0a192f] via-[#0a192f] to-emerald-600';
+  const publicRoutes = ['/', '/login', '/register'];
+  const isPublicRoute = publicRoutes.includes(pathname);
 
   return (
-    <html lang="en" className={backgroundClass}>
-      <head>
-        <title>Xurp Ia</title>
-      </head>
-      <body>
-        {showNavbar && <Navbar />}
-        {children}
+    <html lang="en">
+      <body className={isPublicRoute ? 'bg-gradient-to-br from-[#0a192f] via-[#0a192f] to-emerald-600' : ''}>
+        <ThemeProvider>
+          {isPublicRoute && <Navbar />}
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
