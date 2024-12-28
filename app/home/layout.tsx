@@ -3,14 +3,16 @@ import React from 'react';
 import '../globals.css';
 import Sidebar from '../../components/Sidebar';
 import Notifications from './components/Notifications';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function HomeLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen bg-gray-50 text-gray-900 dark:bg-zinc-900 dark:text-white">
+    <div className="flex min-h-screen bg-white dark:bg-zinc-900">
       <Sidebar />
       <main className="flex-1">
-        <div className="absolute top-4 right-4 z-50">
+        <div className="absolute top-4 right-4 z-50 flex items-center gap-4">
           <Notifications />
+          <ThemeToggle />
         </div>
         {children}
       </main>

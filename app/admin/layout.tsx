@@ -1,6 +1,9 @@
+'use client';
+
 import '../globals.css';
 import AdminSidebar from './components/AdminSidebar';
 import AdminNotifications from './components/AdminNotifications';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function AdminLayout({
   children,
@@ -12,8 +15,9 @@ export default function AdminLayout({
       <AdminSidebar />
       <main className="flex-1">
         <div className="relative">
-          <div className="absolute top-4 right-4 z-50">
+          <div className="absolute top-4 right-4 z-50 flex items-center gap-4">
             <AdminNotifications />
+            <ThemeToggle />
           </div>
         </div>
         {children}
