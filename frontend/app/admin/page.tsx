@@ -1,117 +1,115 @@
 'use client';
 
-import { FaTasks, FaUsers, FaCalendarAlt, FaChartLine } from 'react-icons/fa';
-import { useTheme } from '@/app/contexts/ThemeContext';
+import { useState, useEffect } from 'react';
+import { useProjects } from '@/app/hooks/useProjects';
+import { useCollaborators } from '@/app/hooks/useCollaborators';
+import { FaUsers, FaProjectDiagram, FaTasks } from 'react-icons/fa';
+import Link from 'next/link';
 
 export default function AdminDashboard() {
-  const { theme } = useTheme();
-  
+  const { projects } = useProjects();
+  const [stats, setStats] = useState({
+    totalProjects: 0,
+    totalCollaborators: 0,
+    totalTasks: 0
+  });
+
+  useEffect(() => {
+    const calculateStats = async () => {
+      // Calcular estadísticas
+      setStats({
+        totalProjects: projects.length,
+        totalCollaborators: projects.reduce((acc, project) => 
+          acc + (project.collaborators?.length || 0), 0),
+        totalTasks: projects.reduce((acc, project) => 
+          acc + (project.tasks?.length || 0), 0)
+      });
+    };
+
+    calculateStats();
+  }, [projects]);
+
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto">
+    <div className="p-8">
       <div className="mb-8">
-        <h1 className={`text-3xl font-bold mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-          (NOMBRE DEL PROYECTO)
+        <h1 className="text-3xl font-bold text-zinc-800 dark:text-white">
+          Panel de Administración
         </h1>
-        <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-          Descripción del proyecto...
+        <p className="text-gray-600 dark:text-gray-400 mt-2">
+          Bienvenido al panel de administración
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Panel de Tareas */}
-        <div className={`rounded-lg p-6 ${theme === 'dark' ? 'bg-zinc-800' : 'bg-white'} shadow-sm`}>
-          <h2 className={`text-xl font-semibold mb-6 flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-            <FaTasks className="text-green-500" />
-            Tareas
-          </h2>
-          <div className="space-y-4">
-            <button className="w-full bg-green-500 text-white py-2.5 px-4 rounded-md hover:bg-green-600 transition-colors font-medium">
-              Crear Tareas
-            </button>
-            <button className="w-full bg-red-500 text-white py-2.5 px-4 rounded-md hover:bg-red-600 transition-colors font-medium">
-              Eliminar Tareas
-            </button>
-            <div className="space-y-4 mt-6">
-              {[1, 2, 3].map((task) => (
-                <div 
-                  key={task} 
-                  className={`pb-4 border-b ${theme === 'dark' ? 'border-zinc-700' : 'border-gray-200'} last:border-0 last:pb-0`}
-                >
-                  <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>
-                    Tarea {task}: Acá saldrán todas las tareas asignadas, con su fecha de entrega y responsable
-                  </p>
-                  <button className="mt-2 text-blue-500 hover:text-blue-600 transition-colors font-medium">
-                    Ver Tarea
-                  </button>
-                </div>
-              ))}
-            </div>
+      {/* Estadísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="card p-6 flex items-center">
+          <FaProjectDiagram className="text-4xl text-blue-500 mr-4" />
+          <div>
+            <h3 className="text-lg font-semibold">Proyectos</h3>
+            <p className="text-2xl font-bold">{stats.totalProjects}</p>
           </div>
         </div>
-
-        {/* Panel de Progreso */}
-        <div className={`rounded-lg p-6 ${theme === 'dark' ? 'bg-zinc-800' : 'bg-white'} shadow-sm`}>
-          <h2 className={`text-xl font-semibold mb-6 flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-            <FaChartLine className="text-blue-500" />
-            Progreso Proyecto
-          </h2>
-          <div className="flex justify-center items-center h-[280px]">
-            <div className="relative w-40 h-40">
-              <div className={`absolute inset-0 border-4 rounded-full ${theme === 'dark' ? 'border-zinc-700' : 'border-gray-200'}`}></div>
-              <div className="absolute inset-0 border-4 border-green-500 rounded-full" 
-                   style={{ clipPath: 'polygon(0 0, 100% 0, 100% 25%, 0% 25%)' }}>
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>25%</span>
-              </div>
-            </div>
+        <div className="card p-6 flex items-center">
+          <FaUsers className="text-4xl text-green-500 mr-4" />
+          <div>
+            <h3 className="text-lg font-semibold">Colaboradores</h3>
+            <p className="text-2xl font-bold">{stats.totalCollaborators}</p>
           </div>
         </div>
-
-        {/* Panel de Calendario */}
-        <div className={`rounded-lg p-6 ${theme === 'dark' ? 'bg-zinc-800' : 'bg-white'} shadow-sm`}>
-          <h2 className={`text-xl font-semibold mb-6 flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-            <FaCalendarAlt className="text-red-500" />
-            Calendario
-          </h2>
-          <div className="flex justify-center items-center h-[280px]">
-            <div className="text-center">
-              <div className={`p-3 rounded-t-lg ${theme === 'dark' ? 'bg-zinc-700' : 'bg-gray-100'}`}>
-                <span className="text-red-500 font-bold text-lg">July</span>
-              </div>
-              <div className={`p-6 rounded-b-lg ${theme === 'dark' ? 'bg-zinc-900' : 'bg-gray-50'}`}>
-                <span className={`text-5xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>17</span>
-              </div>
-            </div>
+        <div className="card p-6 flex items-center">
+          <FaTasks className="text-4xl text-purple-500 mr-4" />
+          <div>
+            <h3 className="text-lg font-semibold">Tareas</h3>
+            <p className="text-2xl font-bold">{stats.totalTasks}</p>
           </div>
         </div>
+      </div>
 
-        {/* Panel de Colaboradores */}
-        <div className={`rounded-lg p-6 ${theme === 'dark' ? 'bg-zinc-800' : 'bg-white'} shadow-sm`}>
-          <h2 className={`text-xl font-semibold mb-6 flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-            <FaUsers className="text-purple-500" />
-            Colaboradores
-          </h2>
-          <div className="flex flex-wrap gap-4 mb-6">
-            {[1, 2, 3].map((collaborator) => (
-              <div 
-                key={collaborator} 
-                className={`w-14 h-14 rounded-full ${theme === 'dark' ? 'bg-zinc-700' : 'bg-gray-100'} flex items-center justify-center`}
+      {/* Acciones rápidas */}
+      <div className="card p-6 mb-8">
+        <h2 className="text-xl font-semibold mb-4">Acciones Rápidas</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Link 
+            href="/admin/projects"
+            className="btn-primary p-4 rounded-lg text-center hover:opacity-90 transition-opacity"
+          >
+            Gestionar Proyectos
+          </Link>
+          <Link 
+            href="/admin/collaborators"
+            className="btn-secondary p-4 rounded-lg text-center hover:opacity-90 transition-opacity"
+          >
+            Gestionar Colaboradores
+          </Link>
+          <Link 
+            href="/admin/tasks"
+            className="bg-purple-500 text-white p-4 rounded-lg text-center hover:opacity-90 transition-opacity"
+          >
+            Gestionar Tareas
+          </Link>
+        </div>
+      </div>
+
+      {/* Actividad Reciente */}
+      <div className="card p-6">
+        <h2 className="text-xl font-semibold mb-4">Actividad Reciente</h2>
+        <div className="space-y-4">
+          {projects.slice(0, 5).map((project) => (
+            <div key={project.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-900 rounded-lg">
+              <div>
+                <h3 className="font-semibold">{project.name}</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {project.collaborators?.length || 0} colaboradores · {project.tasks?.length || 0} tareas
+                </p>
+              </div>
+              <Link
+                href={`/admin/projects/${project.id}`}
+                className="text-blue-500 hover:text-blue-600"
               >
-                <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                  User {collaborator}
-                </span>
-              </div>
-            ))}
-          </div>
-          <div className="space-y-3">
-            <button className="w-full bg-green-500 text-white py-2.5 px-4 rounded-md hover:bg-green-600 transition-colors font-medium">
-              Asignar Administrador
-            </button>
-            <button className="w-full bg-red-500 text-white py-2.5 px-4 rounded-md hover:bg-red-600 transition-colors font-medium">
-              Eliminar Colaborador
-            </button>
-          </div>
+                Ver detalles
+              </Link>
+            </div>
+          ))}
         </div>
       </div>
     </div>

@@ -1,116 +1,95 @@
 'use client';
 
-import { useState } from 'react';
-import { FaPlus, FaCheck, FaClock, FaTrash } from 'react-icons/fa';
-
-interface Task {
-  id: number;
-  title: string;
-  description: string;
-  status: 'pending' | 'completed';
-  dueDate: string;
-}
+import React, { useState } from 'react';
+import { useTasks } from '@/app/hooks/useTasks';
+import { useAuth } from '@/app/hooks/useAuth';
+import { useProjects } from '@/app/hooks/useProjects';
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: 1,
-      title: 'Completar documentación',
-      description: 'Finalizar la documentación del proyecto actual',
-      status: 'pending',
-      dueDate: '2024-01-15'
-    },
-    {
-      id: 2,
-      title: 'Revisar pull requests',
-      description: 'Revisar y aprobar los PRs pendientes',
-      status: 'completed',
-      dueDate: '2024-01-10'
-    }
-  ]);
+  const { tasks, loading, error, createTask, updateTask, deleteTask } = useTasks();
+  const { user } = useAuth();
+  const { projects, loading: loadingProjects } = useProjects();
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [editingTask, setEditingTask] = useState<number | null>(null);
+  const [editTitle, setEditTitle] = useState('');
 
-  const [newTask, setNewTask] = useState({
-    title: '',
-    description: '',
-    dueDate: ''
-  });
-
-  const addTask = (e: React.FormEvent) => {
+  const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTask.title) return;
+    if (!newTaskTitle.trim()) return;
 
-    setTasks([
-      ...tasks,
-      {
-        id: Date.now(),
-        ...newTask,
-        status: 'pending'
+    try {
+      await createTask({
+        title: newTaskTitle,
+      });
+      setNewTaskTitle('');
+    } catch (err) {
+      console.error('Error creating task:', err);
+    }
+  };
+
+  const handleUpdateTask = async (taskId: number) => {
+    if (!editTitle.trim()) return;
+
+    try {
+      await updateTask(taskId, {
+        title: editTitle,
+      });
+      setEditingTask(null);
+      setEditTitle('');
+    } catch (err) {
+      console.error('Error updating task:', err);
+    }
+  };
+
+  const handleStatusChange = async (taskId: number, newStatus: string) => {
+    try {
+      await updateTask(taskId, {
+        status: newStatus as 'PENDING' | 'IN_PROGRESS' | 'COMPLETED',
+      });
+    } catch (err) {
+      console.error('Error updating task status:', err);
+    }
+  };
+
+  const handleDeleteTask = async (taskId: number) => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
+      try {
+        await deleteTask(taskId);
+      } catch (err) {
+        console.error('Error deleting task:', err);
       }
-    ]);
-
-    setNewTask({
-      title: '',
-      description: '',
-      dueDate: ''
-    });
+    }
   };
 
-  const toggleTaskStatus = (taskId: number) => {
-    setTasks(tasks.map(task =>
-      task.id === taskId
-        ? { ...task, status: task.status === 'pending' ? 'completed' : 'pending' }
-        : task
-    ));
-  };
-
-  const deleteTask = (taskId: number) => {
-    setTasks(tasks.filter(task => task.id !== taskId));
-  };
+  if (loading || loadingProjects) return <div className="p-4">Cargando...</div>;
+  if (error) return <div className="p-4 text-red-500">{error}</div>;
+  if (!projects || projects.length === 0) {
+    return (
+      <div className="p-4">
+        <div className="text-red-500">No hay proyectos disponibles. Necesitas crear un proyecto primero.</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Tareas</h1>
+    <div className="p-4">
+      <h1 className="text-2xl font-bold mb-4">Mis Tareas</h1>
 
-      {/* Formulario para nueva tarea */}
-      <form onSubmit={addTask} className="mb-8 bg-white dark:bg-zinc-800 rounded-lg p-6 shadow-sm">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-gray-700 dark:text-gray-300 mb-2">Título</label>
-            <input
-              type="text"
-              value={newTask.title}
-              onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-              className="w-full bg-gray-50 dark:bg-zinc-900 text-gray-900 dark:text-white px-4 py-2 rounded-md border border-gray-200 dark:border-zinc-700"
-              placeholder="Título de la tarea"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 dark:text-gray-300 mb-2">Fecha límite</label>
-            <input
-              type="date"
-              value={newTask.dueDate}
-              onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
-              className="w-full bg-gray-50 dark:bg-zinc-900 text-gray-900 dark:text-white px-4 py-2 rounded-md border border-gray-200 dark:border-zinc-700"
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-gray-700 dark:text-gray-300 mb-2">Descripción</label>
-            <textarea
-              value={newTask.description}
-              onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-              className="w-full bg-gray-50 dark:bg-zinc-900 text-gray-900 dark:text-white px-4 py-2 rounded-md border border-gray-200 dark:border-zinc-700 resize-none"
-              rows={3}
-              placeholder="Descripción de la tarea"
-            />
-          </div>
-        </div>
-        <div className="mt-4 flex justify-end">
+      {/* Formulario para crear nueva tarea */}
+      <form onSubmit={handleCreateTask} className="mb-6">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newTaskTitle}
+            onChange={(e) => setNewTaskTitle(e.target.value)}
+            placeholder="Nueva tarea"
+            className="flex-1 p-2 border rounded"
+          />
           <button
             type="submit"
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
           >
-            <FaPlus /> Agregar Tarea
+            Agregar
           </button>
         </div>
       </form>
@@ -120,38 +99,71 @@ export default function TasksPage() {
         {tasks.map((task) => (
           <div
             key={task.id}
-            className="bg-white dark:bg-zinc-800 rounded-lg p-6 shadow-sm flex items-start justify-between"
+            className="p-4 border rounded-lg shadow-sm bg-white"
           >
-            <div className="flex-1">
-              <div className="flex items-center gap-3">
+            {editingTask === task.id ? (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="flex-1 p-2 border rounded"
+                />
                 <button
-                  onClick={() => toggleTaskStatus(task.id)}
-                  className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                    task.status === 'completed'
-                      ? 'bg-green-500 text-white'
-                      : 'bg-gray-200 dark:bg-zinc-700'
-                  }`}
+                  onClick={() => handleUpdateTask(task.id)}
+                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                 >
-                  {task.status === 'completed' && <FaCheck size={12} />}
+                  Guardar
                 </button>
-                <h3 className={`text-lg font-semibold text-gray-900 dark:text-white ${
-                  task.status === 'completed' ? 'line-through opacity-50' : ''
-                }`}>
-                  {task.title}
-                </h3>
+                <button
+                  onClick={() => {
+                    setEditingTask(null);
+                    setEditTitle('');
+                  }}
+                  className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                >
+                  Cancelar
+                </button>
               </div>
-              <p className="mt-2 text-gray-600 dark:text-gray-400">{task.description}</p>
-              <div className="mt-3 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                <FaClock />
-                <span>{task.dueDate}</span>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold">{task.title}</h3>
+                  <p className="text-sm text-gray-500">
+                    Asignado a: {task.assignee.name}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Proyecto: {task.project.name}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <select
+                    value={task.status}
+                    onChange={(e) => handleStatusChange(task.id, e.target.value)}
+                    className="p-2 border rounded"
+                  >
+                    <option value="PENDING">Pendiente</option>
+                    <option value="IN_PROGRESS">En Progreso</option>
+                    <option value="COMPLETED">Completada</option>
+                  </select>
+                  <button
+                    onClick={() => {
+                      setEditingTask(task.id);
+                      setEditTitle(task.title);
+                    }}
+                    className="p-2 text-blue-500 hover:text-blue-600"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => handleDeleteTask(task.id)}
+                    className="p-2 text-red-500 hover:text-red-600"
+                  >
+                    Eliminar
+                  </button>
+                </div>
               </div>
-            </div>
-            <button
-              onClick={() => deleteTask(task.id)}
-              className="text-red-500 hover:text-red-600 p-2"
-            >
-              <FaTrash />
-            </button>
+            )}
           </div>
         ))}
       </div>

@@ -1,8 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import CollaboratorModal from '../components/modals/CollaboratorModal';
 import { FaUserCircle } from 'react-icons/fa';
+import { useProjects } from '@/app/hooks/useProjects';
+import { useCollaborators } from '@/app/hooks/useCollaborators';
+import { collaboratorsApi } from '@/app/api/collaborators.api';
 
 interface Collaborator {
   id: number;
@@ -15,26 +18,18 @@ export default function CollaboratorsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [selectedCollaborator, setSelectedCollaborator] = useState<Collaborator | null>(null);
-  const [collaborators, setCollaborators] = useState<Collaborator[]>([
-    {
-      id: 1,
-      name: 'Juan Pérez',
-      email: 'juan@example.com',
-      role: 'developer'
-    },
-    {
-      id: 2,
-      name: 'Ana García',
-      email: 'ana@example.com',
-      role: 'designer'
-    },
-    {
-      id: 3,
-      name: 'Carlos López',
-      email: 'carlos@example.com',
-      role: 'admin'
+  
+  const { projects } = useProjects();
+  const { collaborators, loading, error, refreshCollaborators, removeCollaborator } = useCollaborators(
+    projects.length > 0 ? projects[0].id : undefined
+  );
+
+  // Cargar colaboradores cuando haya proyectos disponibles
+  useEffect(() => {
+    if (projects.length > 0) {
+      refreshCollaborators(projects[0].id);
     }
-  ]);
+  }, [projects]);
 
   const handleCreateCollaborator = () => {
     setModalMode('create');
@@ -48,44 +43,57 @@ export default function CollaboratorsPage() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteCollaborator = (collaboratorId: number) => {
+  const handleDeleteCollaborator = async (collaboratorId: number) => {
     if (confirm('¿Estás seguro de que quieres eliminar este colaborador?')) {
-      setCollaborators(collaborators.filter(c => c.id !== collaboratorId));
+      try {
+        await removeCollaborator(collaboratorId);
+      } catch (error) {
+        console.error('Error al eliminar colaborador:', error);
+      }
     }
   };
 
-  const handleSaveCollaborator = (collaboratorData: Omit<Collaborator, 'id'>) => {
-    if (modalMode === 'create') {
-      // Crear nuevo colaborador
-      setCollaborators(prev => [
-        ...prev,
-        { ...collaboratorData, id: Date.now() }
-      ]);
-    } else if (modalMode === 'edit' && selectedCollaborator) {
-      // Actualizar colaborador existente
-      setCollaborators(prev =>
-        prev.map(collab =>
-          collab.id === selectedCollaborator.id
-            ? { ...collab, ...collaboratorData }
-            : collab
-        )
-      );
+  const handleSaveCollaborator = async (collaboratorData: Omit<Collaborator, 'id'>) => {
+    try {
+      if (modalMode === 'create' && projects.length > 0) {
+        refreshCollaborators(projects[0].id);
+      } else if (modalMode === 'edit' && selectedCollaborator) {
+        refreshCollaborators(projects[0].id);
+      }
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Error al guardar colaborador:', error);
     }
-    setIsModalOpen(false);
   };
 
   const getRoleColor = (role: string) => {
-    switch (role) {
+    switch (role.toLowerCase()) {
       case 'admin':
         return 'text-red-400';
-      case 'developer':
+      case 'member':
         return 'text-blue-400';
-      case 'designer':
-        return 'text-purple-400';
       default:
         return 'text-gray-400';
     }
   };
+
+  if (loading) {
+    return <div className="p-8">Cargando colaboradores...</div>;
+  }
+
+  if (error) {
+    return <div className="p-8 text-red-500">Error: {error}</div>;
+  }
+
+  if (projects.length === 0) {
+    return (
+      <div className="p-8">
+        <div className="card rounded-lg p-6">
+          <p className="text-red-500">No hay proyectos disponibles. Debes crear un proyecto primero.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">
@@ -107,16 +115,21 @@ export default function CollaboratorsPage() {
               <div className="flex items-center space-x-4">
                 <FaUserCircle className="w-12 h-12 text-gray-400" />
                 <div>
-                  <h3 className="text-white font-semibold">{collaborator.name}</h3>
-                  <p className="text-gray-400 text-sm">{collaborator.email}</p>
+                  <h3 className="text-white font-semibold">{collaborator.user.name}</h3>
+                  <p className="text-gray-400 text-sm">{collaborator.user.email}</p>
                   <p className={`text-sm ${getRoleColor(collaborator.role)}`}>
-                    {collaborator.role.charAt(0).toUpperCase() + collaborator.role.slice(1)}
+                    {collaborator.role.charAt(0).toUpperCase() + collaborator.role.slice(1).toLowerCase()}
                   </p>
                 </div>
               </div>
               <div className="mt-4 flex justify-end gap-2">
                 <button
-                  onClick={() => handleEditCollaborator(collaborator)}
+                  onClick={() => handleEditCollaborator({
+                    id: collaborator.id,
+                    name: collaborator.user.name,
+                    email: collaborator.user.email,
+                    role: collaborator.role
+                  })}
                   className="text-blue-400 hover:text-blue-500"
                 >
                   Editar

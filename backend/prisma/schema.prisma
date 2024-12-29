@@ -8,10 +8,57 @@ datasource db {
 }
 
 model User {
+  id            Int            @id @default(autoincrement())
+  email         String         @unique
+  password      String
+  name          String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  tasks         Task[]         @relation("AssignedTasks")
+  projects      Project[]      @relation("ProjectOwner")
+  collaborations Collaborator[] @relation("UserCollaborations")
+}
+
+model Project {
+  id            Int            @id @default(autoincrement())
+  name          String
+  description   String?
+  ownerId       Int
+  owner         User           @relation("ProjectOwner", fields: [ownerId], references: [id])
+  tasks         Task[]         @relation("ProjectTasks")
+  collaborators Collaborator[] @relation("ProjectCollaborators")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Task {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String?
+  status      TaskStatus @default(PENDING)
+  projectId   Int
+  project     Project   @relation("ProjectTasks", fields: [projectId], references: [id])
+  assigneeId  Int
+  assignee    User      @relation("AssignedTasks", fields: [assigneeId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Collaborator {
   id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  name      String
+  userId    Int
+  user      User     @relation("UserCollaborations", fields: [userId], references: [id])
+  projectId Int
+  project   Project  @relation("ProjectCollaborators", fields: [projectId], references: [id])
+  role      String   @default("MEMBER") // ADMIN, MEMBER
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([userId, projectId])
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
 } 

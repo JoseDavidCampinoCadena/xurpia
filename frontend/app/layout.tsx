@@ -5,11 +5,11 @@ import Navbar from '@/components/Navbar';
 import { usePathname } from 'next/navigation';
 import { ThemeProvider } from './contexts/ThemeContext';
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+function MainContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   // Rutas en las que no se debe mostrar el Navbar
-  const hideNavbarRoutes = ['/register', '/login', '/home', '/admin', '/notes'];
+  const hideNavbarRoutes = ['/home', '/admin', '/notes'];
   
   // Verificar si la ruta actual comienza con alguna de las rutas restringidas
   const shouldHideNavbar = hideNavbarRoutes.some(route => 
@@ -18,17 +18,26 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   // Solo aplicar el fondo gradiente en la página principal
   const isMainPage = pathname === '/';
-  const backgroundClass = isMainPage ? 'bg-gradient-to-br from-[#0a192f] via-[#0a192f] to-emerald-600' : 'bg-white dark:bg-zinc-900';
+  const bgClass = isMainPage ? 'public-route' : 'bg-[rgb(var(--background))]';
 
   return (
-    <html lang="en" className={backgroundClass}>
+    <div className={`min-h-screen ${bgClass}`}>
+      {!shouldHideNavbar && <Navbar />}
+      {children}
+    </div>
+  );
+}
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en" suppressHydrationWarning>
       <head>
         <title>Xurp Ia</title>
+        <meta name="color-scheme" content="light dark" />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <ThemeProvider>
-          {!shouldHideNavbar && <Navbar />}
-          {children}
+          <MainContent>{children}</MainContent>
         </ThemeProvider>
       </body>
     </html>

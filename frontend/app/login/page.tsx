@@ -4,6 +4,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { authApi } from '../api/auth.api';
+import { AxiosError } from 'axios';
+
+interface ErrorResponse {
+  message: string;
+}
 
 const Login = () => {
   const router = useRouter();
@@ -19,8 +24,9 @@ const Login = () => {
       const response = await authApi.login({ email, password });
       console.log('✅ Login exitoso:', response.user.name);
       router.push('./home');
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Error al iniciar sesión';
+    } catch (err) {
+      const axiosError = err as AxiosError<ErrorResponse>;
+      const errorMessage = axiosError.response?.data?.message || 'Error al iniciar sesión';
       console.error('❌ Error de login:', errorMessage);
       setError('Error al iniciar sesión. Por favor, verifica tus credenciales.');
     }

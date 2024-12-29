@@ -1,32 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import { useTasks } from '@/app/hooks/useTasks';
 import TaskModal from '../components/modals/TaskModal';
-
-interface Task {
-  id: number;
-  title: string;
-  description: string;
-  dueDate: string;
-  assignedTo: string;
-  status: 'pending' | 'completed';
-}
+import { Task } from '@/app/api/tasks.api';
 
 export default function TasksPage() {
+  const { tasks, loading, error, createTask, updateTask, deleteTask } = useTasks();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: 1,
-      title: 'Implementar autenticación',
-      description: 'Implementar sistema de login y registro usando Next Auth',
-      dueDate: '2024-07-20',
-      assignedTo: 'user1',
-      status: 'pending'
-    },
-    // Más tareas aquí...
-  ]);
 
   const handleCreateTask = () => {
     setModalMode('create');
@@ -40,11 +23,28 @@ export default function TasksPage() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteTask = (taskId: number) => {
+  const handleDeleteTask = async (taskId: number) => {
     if (confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
-      setTasks(tasks.filter(task => task.id !== taskId));
+      try {
+        await deleteTask(taskId);
+      } catch (err) {
+        console.error('Error deleting task:', err);
+      }
     }
   };
+
+  const handleStatusChange = async (taskId: number, newStatus: string) => {
+    try {
+      await updateTask(taskId, {
+        status: newStatus as 'PENDING' | 'IN_PROGRESS' | 'COMPLETED',
+      });
+    } catch (err) {
+      console.error('Error updating task status:', err);
+    }
+  };
+
+  if (loading) return <div className="p-4">Cargando tareas...</div>;
+  if (error) return <div className="p-4 text-red-500">{error}</div>;
 
   return (
     <div className="p-8">
@@ -68,10 +68,23 @@ export default function TasksPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-zinc-800 dark:text-white font-semibold">{task.title}</h3>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm">Fecha límite: {task.dueDate}</p>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm">Asignado a: {task.assignedTo}</p>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">
+                    Asignado a: {task.assignee.name}
+                  </p>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">
+                    Proyecto: {task.project.name}
+                  </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-4 items-center">
+                  <select
+                    value={task.status}
+                    onChange={(e) => handleStatusChange(task.id, e.target.value)}
+                    className="p-2 border rounded bg-white dark:bg-zinc-800"
+                  >
+                    <option value="PENDING">Pendiente</option>
+                    <option value="IN_PROGRESS">En Progreso</option>
+                    <option value="COMPLETED">Completada</option>
+                  </select>
                   <button
                     onClick={() => handleEditTask(task)}
                     className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-500"
@@ -95,7 +108,19 @@ export default function TasksPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         mode={modalMode}
-        task={selectedTask || undefined}
+        task={selectedTask}
+        onSubmit={async (data) => {
+          try {
+            if (modalMode === 'create') {
+              await createTask(data);
+            } else if (modalMode === 'edit' && selectedTask) {
+              await updateTask(selectedTask.id, data);
+            }
+            setIsModalOpen(false);
+          } catch (err) {
+            console.error('Error saving task:', err);
+          }
+        }}
       />
     </div>
   );

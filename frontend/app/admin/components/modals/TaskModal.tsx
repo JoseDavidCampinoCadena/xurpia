@@ -1,121 +1,111 @@
 'use client';
 
-import { useState } from 'react';
-import { IoClose } from 'react-icons/io5';
+import { useState, useEffect } from 'react';
+import { Task, CreateTaskData, UpdateTaskData } from '@/app/api/tasks.api';
 
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   mode: 'create' | 'edit';
-  task?: {
-    id: number;
-    title: string;
-    description: string;
-    dueDate: string;
-    assignedTo: string;
-  };
+  task?: Task;
+  onSubmit: (data: CreateTaskData | UpdateTaskData) => Promise<void>;
 }
 
-export default function TaskModal({ isOpen, onClose, mode, task }: TaskModalProps) {
-  const [formData, setFormData] = useState({
-    title: task?.title || '',
-    description: task?.description || '',
-    dueDate: task?.dueDate || '',
-    assignedTo: task?.assignedTo || ''
+export default function TaskModal({ isOpen, onClose, mode, task, onSubmit }: TaskModalProps) {
+  const [formData, setFormData] = useState<CreateTaskData | UpdateTaskData>({
+    title: '',
+    description: '',
+    projectId: 1, // Temporal, deberías obtener los proyectos disponibles
+    assigneeId: 1, // Temporal, deberías obtener los usuarios disponibles
+    status: 'PENDING'
   });
+
+  useEffect(() => {
+    if (task && mode === 'edit') {
+      setFormData({
+        title: task.title,
+        description: task.description || '',
+        projectId: task.projectId,
+        assigneeId: task.assigneeId,
+        status: task.status
+      });
+    } else {
+      setFormData({
+        title: '',
+        description: '',
+        projectId: 1,
+        assigneeId: 1,
+        status: 'PENDING'
+      });
+    }
+  }, [task, mode]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await onSubmit(formData);
+  };
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Aquí iría la lógica para crear/editar la tarea
-    console.log('Form submitted:', formData);
-    onClose();
-  };
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="card p-6 w-full max-w-md">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-gray-900 dark:text-white text-xl font-semibold">
-            {mode === 'create' ? 'Crear Nueva Tarea' : 'Editar Tarea'}
-          </h2>
-          <button 
-            onClick={onClose} 
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-          >
-            <IoClose size={24} />
-          </button>
-        </div>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-zinc-800 rounded-lg p-6 w-full max-w-md">
+        <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
+          {mode === 'create' ? 'Nueva Tarea' : 'Editar Tarea'}
+        </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Título
             </label>
             <input
               type="text"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="input w-full rounded-md"
+              className="w-full p-2 border rounded-md bg-white dark:bg-zinc-900 text-gray-900 dark:text-white"
               required
             />
           </div>
 
           <div>
-            <label className="block text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Descripción
             </label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="input w-full rounded-md"
-              rows={4}
-              required
+              className="w-full p-2 border rounded-md bg-white dark:bg-zinc-900 text-gray-900 dark:text-white"
+              rows={3}
             />
           </div>
 
           <div>
-            <label className="block text-gray-700 dark:text-gray-300 mb-2">
-              Fecha límite
-            </label>
-            <input
-              type="date"
-              value={formData.dueDate}
-              onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-              className="input w-full rounded-md"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 dark:text-gray-300 mb-2">
-              Asignar a
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Estado
             </label>
             <select
-              value={formData.assignedTo}
-              onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
-              className="input w-full rounded-md"
-              required
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+              className="w-full p-2 border rounded-md bg-white dark:bg-zinc-900 text-gray-900 dark:text-white"
             >
-              <option value="">Seleccionar usuario</option>
-              <option value="user1">Usuario 1</option>
-              <option value="user2">Usuario 2</option>
-              <option value="user3">Usuario 3</option>
+              <option value="PENDING">Pendiente</option>
+              <option value="IN_PROGRESS">En Progreso</option>
+              <option value="COMPLETED">Completada</option>
             </select>
           </div>
 
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 mt-6">
             <button
               type="button"
               onClick={onClose}
-              className="btn-secondary px-4 py-2 rounded-md"
+              className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="btn-primary px-4 py-2 rounded-md"
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
             >
               {mode === 'create' ? 'Crear' : 'Guardar'}
             </button>

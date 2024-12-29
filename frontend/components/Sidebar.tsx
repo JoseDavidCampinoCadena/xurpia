@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FaHome, FaCalendar, FaTasks, FaBook, FaCog } from 'react-icons/fa';
+import { FaHome, FaCalendar, FaTasks, FaBook, FaCog, FaProjectDiagram } from 'react-icons/fa';
 
 interface NavLink {
   href?: string;
@@ -18,6 +18,7 @@ export default function Sidebar() {
     { href: '/home', icon: <FaHome className="w-5 h-5" />, text: 'Inicio' },
     { href: '/home/calendar', icon: <FaCalendar className="w-5 h-5" />, text: 'Calendario' },
     { href: '/home/tasks', icon: <FaTasks className="w-5 h-5" />, text: 'Tareas' },
+    { href: '/home/projects', icon: <FaProjectDiagram className="w-5 h-5" />, text: 'Proyectos' },
     { href: '/home/notes', icon: <FaBook className="w-5 h-5" />, text: 'Notas' },
     // Separador visual
     { type: 'divider' },
