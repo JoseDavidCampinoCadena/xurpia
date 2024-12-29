@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes infinite-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-infinite-scroll {
+  animation: infinite-scroll 20s linear infinite;
+}
+
 /* Rutas públicas (mantienen sus estilos fijos) */
 .public-route {
   @apply bg-gradient-to-br from-[#0a192f] via-[#0a192f] to-emerald-600 text-white;

@@ -59,22 +59,36 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id='#Home' className="py-12">
-        <div className="relative w-full overflow-hidden bg-opacity-20 backdrop-blur-sm bg-black">
-          <div className="flex whitespace-nowrap">
-            <div className="animate-scroll">
-              {/* Repetimos los elementos 4 veces para asegurar una transición suave */}
-              {[...Array(4)].map((_, groupIndex) => (
-                <React.Fragment key={`group-${groupIndex}`}>
+      {/* Infinite Carousel Section */}
+      <section className="py-12 overflow-hidden">
+        <div className="relative w-full bg-opacity-20 backdrop-blur-sm bg-black">
+          <div className="flex">
+            <div className="animate-infinite-scroll flex whitespace-nowrap">
+              {[...Array(3)].map((_, groupIndex) => (
+                <div key={`group-${groupIndex}`} className="flex">
                   {items.map((item, index) => (
                     <div
                       key={`item-${groupIndex}-${index}`}
-                      className="inline-flex px-6 py-3 text-xl font-bold text-white transition-colors duration-300 hover:text-green-400"
+                      className="inline-flex px-8 py-4 text-2xl font-bold text-white transition-colors duration-300 hover:text-green-400"
                     >
                       {item}
                     </div>
                   ))}
-                </React.Fragment>
+                </div>
+              ))}
+            </div>
+            <div className="animate-infinite-scroll flex whitespace-nowrap" style={{ animationDelay: '0s' }}>
+              {[...Array(3)].map((_, groupIndex) => (
+                <div key={`group-delayed-${groupIndex}`} className="flex">
+                  {items.map((item, index) => (
+                    <div
+                      key={`item-delayed-${groupIndex}-${index}`}
+                      className="inline-flex px-8 py-4 text-2xl font-bold text-white transition-colors duration-300 hover:text-green-400"
+                    >
+                      {item}
+                    </div>
+                  ))}
+                </div>
               ))}
             </div>
           </div>
