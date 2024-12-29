@@ -12,7 +12,8 @@
 }
 
 .animate-infinite-scroll {
-  animation: infinite-scroll 20s linear infinite;
+  animation: infinite-scroll 30s linear infinite;
+  will-change: transform;
 }
 
 /* Rutas públicas (mantienen sus estilos fijos) */

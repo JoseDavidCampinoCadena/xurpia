@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export default function Navbar() {
   return (
-    <nav className="flex justify-between items-center px-6 py-4 mx-6 mt-4  backdrop-blur-md rounded-full ">
+    <nav className="flex justify-between items-center px-6 py-4 mx-6   backdrop-blur-md rounded-full ">
       {/* Logo */}
       <h1 className="text-xl font-bold">
         <span className="text-white">XURP</span>{' '}

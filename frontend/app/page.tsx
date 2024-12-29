@@ -64,25 +64,11 @@ export default function HomePage() {
         <div className="relative w-full bg-opacity-20 backdrop-blur-sm bg-black">
           <div className="flex">
             <div className="animate-infinite-scroll flex whitespace-nowrap">
-              {[...Array(3)].map((_, groupIndex) => (
-                <div key={`group-${groupIndex}`} className="flex">
+              {[...Array(4)].map((_, groupIndex) => (
+                <div key={`group-${groupIndex}`} className="inline-flex">
                   {items.map((item, index) => (
                     <div
                       key={`item-${groupIndex}-${index}`}
-                      className="inline-flex px-8 py-4 text-2xl font-bold text-white transition-colors duration-300 hover:text-green-400"
-                    >
-                      {item}
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-            <div className="animate-infinite-scroll flex whitespace-nowrap" style={{ animationDelay: '0s' }}>
-              {[...Array(3)].map((_, groupIndex) => (
-                <div key={`group-delayed-${groupIndex}`} className="flex">
-                  {items.map((item, index) => (
-                    <div
-                      key={`item-delayed-${groupIndex}-${index}`}
                       className="inline-flex px-8 py-4 text-2xl font-bold text-white transition-colors duration-300 hover:text-green-400"
                     >
                       {item}
