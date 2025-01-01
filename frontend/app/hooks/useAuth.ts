@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { setCookie, getCookie, removeCookie } from '../utils/cookies';
 
 interface User {
   id: number;
@@ -15,30 +16,30 @@ export const useAuth = () => {
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
+    const token = getCookie('token');
+    const userData = getCookie('user');
 
     if (token && userData) {
       try {
         setUser(JSON.parse(userData));
       } catch (error) {
         console.error('Error parsing user data:', error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        removeCookie('token');
+        removeCookie('user');
       }
     }
     setLoading(false);
   }, []);
 
   const login = (token: string, userData: User) => {
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
+    setCookie('token', token);
+    setCookie('user', JSON.stringify(userData));
     setUser(userData);
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    removeCookie('token');
+    removeCookie('user');
     setUser(null);
     router.push('/login');
   };

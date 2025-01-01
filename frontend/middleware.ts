@@ -2,26 +2,30 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
-  // Por ahora, simplemente verificamos si hay un token en las cookies
-  const token = request.cookies.get('token');
-  
-  // Proteger rutas de administrador
-  if (request.nextUrl.pathname.startsWith('/admin')) {
-    if (!token) {
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
+  // Obtener el token del localStorage
+  const token = request.cookies.get('token')?.value;
+  const isAuthPage = request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register';
+
+  // Si el usuario intenta acceder a login/register estando autenticado
+  if (isAuthPage && token) {
+    return NextResponse.redirect(new URL('/home', request.url));
   }
 
-  // Proteger rutas de usuario autenticado
-  if (request.nextUrl.pathname.startsWith('/home')) {
-    if (!token) {
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
+  // Si el usuario intenta acceder a rutas protegidas sin estar autenticado
+  if (!token && !isAuthPage) {
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('from', request.nextUrl.pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/home/:path*'],
+  matcher: [
+    '/home/:path*',
+    '/admin/:path*',
+    '/login',
+    '/register'
+  ],
 }; 

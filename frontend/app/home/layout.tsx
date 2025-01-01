@@ -4,7 +4,7 @@ import '../globals.css';
 import Sidebar from '../../components/Sidebar';
 import Notifications from './components/Notifications';
 import ThemeToggle from '@/components/ThemeToggle';
-import LogoutButton from "../components/LogoutButton";
+import { LogoutButton } from "../components/LogoutButton";
 
 export default function HomeLayout({ children }: { children: React.ReactNode }) {
   return (

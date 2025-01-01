@@ -1,12 +1,17 @@
 'use client';
 
-import React, { useState } from "react";
-import Link from "next/link";
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { authApi } from '../api/auth.api';
+import { useAuth } from '../hooks/useAuth';
+import { AxiosError } from 'axios';
 
-const Register = () => {
-  const router = useRouter();
+interface ErrorResponse {
+  message: string;
+}
+
+export default function RegisterPage() {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -17,6 +22,8 @@ const Register = () => {
   });
   const [error, setError] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const router = useRouter();
+  const { login } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -51,18 +58,24 @@ const Register = () => {
         email: formData.email,
         password: formData.password
       });
-      console.log('✅ Registro exitoso para:', response.user.name);
-      router.push('./login');
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Error al registrar usuario';
-      console.error('❌ Error de registro:', errorMessage);
-      setError('Error al registrar usuario. Por favor, intenta de nuevo.');
+      console.log('✅ Registro exitoso para:', response.data.user.name);
+      login(response.data.token, response.data.user);
+      router.push('/home');
+    } catch (err) {
+      if (err instanceof AxiosError && err.response?.data) {
+        const errorData = err.response.data as ErrorResponse;
+        console.error('❌ Error de registro:', errorData.message);
+        setError(errorData.message);
+      } else {
+        console.error('❌ Error de registro:', err);
+        setError('Error al registrar usuario. Por favor, intenta de nuevo.');
+      }
     }
   };
 
   return (
     <div className="min-h-screen bg-darkBlue flex items-center justify-center">
-      <div className="bg-white flex shadow-lg overflow-hidden max-w-5xl w-full mx-auto h-screen rounded-lg m-24">
+      <div className="bg-white dark:bg-zinc-800 flex shadow-lg overflow-hidden max-w-5xl w-full mx-auto h-screen rounded-lg m-24">
         {/* Imagen */}
         <div className="w-1/2 h-full">
           <img
@@ -74,11 +87,11 @@ const Register = () => {
 
         {/* Formulario */}
         <div className="w-1/2 p-12 flex flex-col justify-center">
-          <h2 className="text-3xl font-bold mb-6 text-black">Register</h2>
+          <h2 className="text-3xl font-bold mb-6 text-black dark:text-white">Register</h2>
 
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="grid grid-cols-2 gap-6">
-              <label className="font-bold text-black">
+              <label className="font-bold text-black dark:text-white">
                 Nombre
                 <input
                   type="text"
@@ -86,23 +99,23 @@ const Register = () => {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="border border-gray-300 font-normal rounded-full px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="border border-gray-300 dark:border-zinc-700 font-normal rounded-full px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900 dark:text-white bg-white dark:bg-zinc-800"
                 />
               </label>
-              <label className="font-bold text-black">
+              <label className="font-bold text-black dark:text-white">
                 Número telefónico
                 <input
                   type="number"
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="border border-gray-300 font-normal rounded-full px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="border border-gray-300 dark:border-zinc-700 font-normal rounded-full px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900 dark:text-white bg-white dark:bg-zinc-800"
                 />
               </label>
             </div>
 
             <div className="grid grid-cols-2 gap-6">
-              <label className="font-bold text-black">
+              <label className="font-bold text-black dark:text-white">
                 Correo electrónico
                 <input
                   type="email"
@@ -111,10 +124,10 @@ const Register = () => {
                   onChange={handleChange}
                   required
                   placeholder="Correo Electrónico"
-                  className="border border-gray-300 font-normal rounded-full px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="border border-gray-300 dark:border-zinc-700 font-normal rounded-full px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900 dark:text-white bg-white dark:bg-zinc-800"
                 />
               </label>
-              <label className="font-bold text-black">
+              <label className="font-bold text-black dark:text-white">
                 Ciudad
                 <input
                   type="text"
@@ -122,13 +135,13 @@ const Register = () => {
                   value={formData.city}
                   onChange={handleChange}
                   placeholder="Ciudad"
-                  className="border border-gray-300 font-normal rounded-full px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="border border-gray-300 dark:border-zinc-700 font-normal rounded-full px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900 dark:text-white bg-white dark:bg-zinc-800"
                 />
               </label>
             </div>
 
             <div className="grid grid-cols-2 gap-6">
-              <label className="font-bold text-black">
+              <label className="font-bold text-black dark:text-white">
                 Contraseña
                 <input
                   type="password"
@@ -137,10 +150,10 @@ const Register = () => {
                   onChange={handleChange}
                   required
                   placeholder="Contraseña"
-                  className="border border-gray-300 font-normal rounded-full px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="border border-gray-300 dark:border-zinc-700 font-normal rounded-full px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900 dark:text-white bg-white dark:bg-zinc-800"
                 />
               </label>
-              <label className="font-bold text-black">
+              <label className="font-bold text-black dark:text-white">
                 Confirmar contraseña
                 <input
                   type="password"
@@ -149,7 +162,7 @@ const Register = () => {
                   onChange={handleChange}
                   required
                   placeholder="Confirmar Contraseña"
-                  className="border border-gray-300 font-normal rounded-full px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="border border-gray-300 dark:border-zinc-700 font-normal rounded-full px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900 dark:text-white bg-white dark:bg-zinc-800"
                 />
               </label>
             </div>
@@ -160,7 +173,7 @@ const Register = () => {
               </div>
             )}
 
-            <div className="flex items-start text-black">
+            <div className="flex items-start text-black dark:text-white">
               <input 
                 type="checkbox" 
                 id="terms" 
@@ -169,13 +182,13 @@ const Register = () => {
                 onChange={(e) => setAcceptTerms(e.target.checked)}
                 required
               />
-              <label htmlFor="terms" className="text-sm text-gray-600">
+              <label htmlFor="terms" className="text-sm text-gray-600 dark:text-gray-300">
                 Al registrarte, aceptas nuestros{' '}
-                <a href="#" className="text-blue-600">
+                <a href="#" className="text-blue-600 dark:text-blue-400">
                   Términos y Condiciones
                 </a>{' '}
                 y{' '}
-                <a href="#" className="text-blue-600">
+                <a href="#" className="text-blue-600 dark:text-blue-400">
                   Política de Privacidad
                 </a>
                 , y autorizas recibir notificaciones sobre productos, servicios y
@@ -183,16 +196,16 @@ const Register = () => {
               </label>
             </div>
 
-            <button 
+            <button
               type="submit"
               className="w-full bg-[#6395C2] text-white py-3 px-6 rounded-full font-semibold hover:bg-blue-600 transition duration-300"
             >
               Registrarse
             </button>
 
-            <p className="text-center text-sm text-gray-600 mt-4">
+            <p className="text-center text-sm text-gray-600 dark:text-gray-300 mt-4">
               ¿Ya tienes una cuenta?{' '}
-              <Link href="./login" className="text-blue-600">
+              <Link href="/login" className="text-blue-600 dark:text-blue-400">
                 Login
               </Link>
             </p>
@@ -201,6 +214,4 @@ const Register = () => {
       </div>
     </div>
   );
-};
-
-export default Register;
+}

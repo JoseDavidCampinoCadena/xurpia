@@ -4,7 +4,7 @@ import '../globals.css';
 import AdminSidebar from './components/AdminSidebar';
 import AdminNotifications from './components/AdminNotifications';
 import ThemeToggle from '@/components/ThemeToggle';
-import LogoutButton from "../components/LogoutButton";
+import { LogoutButton } from "../components/LogoutButton";
 
 export default function AdminLayout({
   children,

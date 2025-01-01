@@ -1,34 +1,20 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { authApi } from '../api/auth.api';
+import { useAuth } from '../hooks/useAuth';
 
-export default function LogoutButton() {
-  const router = useRouter();
+export const LogoutButton = () => {
+  const { logout } = useAuth();
 
   const handleLogout = () => {
-    authApi.logout();
-    router.push('/login');
+    logout();
   };
 
   return (
     <button
       onClick={handleLogout}
-      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
+      className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-5 w-5"
-        viewBox="0 0 20 20"
-        fill="currentColor"
-      >
-        <path
-          fillRule="evenodd"
-          d="M3 3a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H3zm11 4.414l-4.293 4.293a1 1 0 0 1-1.414-1.414L11.586 7H6a1 1 0 1 1 0-2h5.586L8.293 1.707a1 1 0 0 1 1.414-1.414L14 4.586v2.828z"
-          clipRule="evenodd"
-        />
-      </svg>
-      Cerrar Sesión
+      Cerrar sesión
     </button>
   );
-} 
+}; 
