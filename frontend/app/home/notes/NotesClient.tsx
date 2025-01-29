@@ -72,7 +72,7 @@ const NotesClient = ({ initialNotes }: NotesClientProps) => {
           onChange={(e) => setNewNoteText(e.target.value)}
           className={`flex-grow p-2 rounded-md placeholder-gray-400 focus:outline-none ${
             theme === 'dark'
-              ? 'bg-gray-700 text-white'
+              ? 'bg-zinc-800 text-white'
               : 'bg-white text-gray-900 border border-gray-200'
           }`}
         />

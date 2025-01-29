@@ -138,7 +138,7 @@ export default function CalendarPage() {
                   onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value as any })}
                   className="w-full bg-zinc-900 text-white px-4 py-2 rounded-md"
                 >
-                  <option value="meeting">Reunión</option>
+                  <option value="meeting">Reunión</option>n
                   <option value="deadline">Fecha límite</option>
                   <option value="other">Otro</option>
                 </select>

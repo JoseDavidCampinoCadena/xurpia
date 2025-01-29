@@ -64,7 +64,7 @@ export default function ProjectsPage() {
       <form onSubmit={handleCreateProject} className="mb-6 bg-white p-4 dark:bg-zinc-900 rounded-lg shadow-sm">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-white mb-1">
               Nombre del Proyecto
             </label>
             <input
@@ -77,7 +77,7 @@ export default function ProjectsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-white mb-1">
               Descripción
             </label>
             <textarea

@@ -30,7 +30,7 @@ export default function Sidebar() {
     <div className="w-64 min-h-screen bg-white dark:bg-zinc-900 border-r border-gray-200 dark:border-zinc-700 p-4">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          XURP<span className="text-green-500">IA</span>
+          XURP<span className="text-green-500"> IA</span>
         </h1>
       </div>
       
