@@ -84,6 +84,10 @@ export default function Home() {
                     <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                       Cantidad de integrantes: 10
                     </p>
+                    <br />
+                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Equipo: Público
+                    </p>
                   </div>
                 </div>
                 <p className="mt-4">

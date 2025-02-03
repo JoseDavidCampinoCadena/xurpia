@@ -52,6 +52,11 @@ export default function AdminSidebar() {
       path: '/admin/settings',
       name: 'Configuración',
       icon: <FaCog className={`w-5 h-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
+    },
+    {
+      path: '/home',
+      name: 'Regresar',
+      icon: <FaHome className={`w-5 h-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
     }
   ];
 
