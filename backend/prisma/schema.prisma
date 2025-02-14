@@ -63,6 +63,7 @@ model Collaborator {
   @@unique([userId, projectId])
 }
 
+
 enum TaskStatus {
   PENDING
   IN_PROGRESS

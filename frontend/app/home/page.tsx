@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useTheme } from '@/app/contexts/ThemeContext';
 
+
 export default function Home() {
   const { theme } = useTheme();
   
@@ -21,8 +22,7 @@ export default function Home() {
               theme === 'dark' ? 'text-white placeholder-gray-400' : 'text-gray-900 placeholder-gray-500'
             }`}
           />
-        </div>
-
+        </div>  
         <div className={`font-bold city flex w-[400px] items-center p-4 rounded-xl ${
           theme === 'dark' ? 'bg-zinc-800' : 'bg-white border border-gray-200'
         }`}>
@@ -71,7 +71,7 @@ export default function Home() {
               }`}>
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <img className="h-12 w-12" src="heeq-logo.png" alt="Logo de Heeq" />
+                    <img className="h-12 w-12 m-2" src="https://pngimg.com/d/letter_h_PNG71.png" alt="Logo de Heeq" />
                   </div>
                   <div className="ml-4">
                     <h2 className="text-lg font-bold">Heeq</h2>

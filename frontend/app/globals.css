@@ -16,6 +16,10 @@
   will-change: transform;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 /* Rutas públicas (mantienen sus estilos fijos) */
 .public-route {
   @apply bg-gradient-to-br from-[#0a192f] via-[#0a192f] to-emerald-600 text-white;

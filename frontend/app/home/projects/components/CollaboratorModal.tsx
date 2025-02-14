@@ -65,6 +65,10 @@ export default function CollaboratorModal({ projectId, onClose, onSuccess }: Col
             >
               <option value="MEMBER">Miembro</option>
               <option value="ADMIN">Administrador</option>
+              <option value="DESIGNER">Diseñador</option>
+              <option value="FREELANCER">Freelancer</option>
+              <option value="MARKETING">Marketing</option>
+              <option value="ASISTANT">Asistente</option>
             </select>
           </div>
 
