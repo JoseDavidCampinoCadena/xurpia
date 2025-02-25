@@ -41,7 +41,7 @@ const Login = () => {
 
   return (
     <div className='min-h-screen bg-darkBlue flex items-center justify-center'>
-      <div className="bg-white dark:bg-zinc-800 flex shadow-lg overflow-hidden max-w-5xl w-full mx-auto h-screen rounded-lg m-12">
+      <div className="bg-white dark:bg-zinc-800 flex shadow-lg overflow-hidden max-w-5xl w-full mx-auto h-screen rounded-lg m-24">
         {/* Imagen */}
         <div className="w-1/2 h-full">
           <img

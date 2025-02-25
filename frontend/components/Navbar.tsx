@@ -1,52 +1,27 @@
-import Link from 'next/link';
+import Link from "next/link";
+import { FaTelegram, FaInstagram, FaXTwitter, FaDiscord } from "react-icons/fa6";
 
 export default function Navbar() {
   return (
-    <nav className="flex justify-between items-center px-6 py-4 mx-6   backdrop-blur-md rounded-full ">
-      {/* Logo */}
-      <h1 className="text-xl font-bold">
-        <span className="text-white">XURP</span>{' '}
-        <span className=" text-green-500 px-2 py-1 rounded-full">IA</span>
-      </h1>
-
-      {/* Navigation Links */}
-      <ul className="flex gap-4 text-white font-medium text-sm">
-        <li>
-          <Link href="/" className="hover:text-green-400">
-            Home
-          </Link>
-        </li>
-        <li>
-          <Link href="#services" className="hover:text-green-400">
-            Services
-          </Link>
-        </li>
-        <li>
-          <Link href="#contact" className="hover:text-green-400">
-            Contact
-          </Link>
-        </li>
-        <li>
-          <Link href="#faq" className="hover:text-green-400">
-            FAQ
-          </Link>
-        </li>
-      </ul>
-
-      {/* Action Buttons */}
-      <div className="space-x-3">
-        <Link href="/register">
-        <button className="text-sm px-3 py-2 bg-sky-700 rounded text-white hover:text-green-400 transition">
-          Registrarse
-        </button>
+    <nav className="fixed top-0 w-full px-6 py-4 flex justify-between items-center bg-transparent text-white z-50">
+      {/* Redes sociales (izquierda) */}
+      <div className="flex space-x-4 text-gray-400">
+        <Link href="#" className="hover:text-white transition"><FaTelegram /></Link>
+        <Link href="#" className="hover:text-white transition"><FaInstagram /></Link>
+        <Link href="#" className="hover:text-white transition"><FaXTwitter /></Link>
+        <Link href="#" className="hover:text-white transition"><FaDiscord /></Link>
+        <Link href="/">
+          <div className="absolute left-1/2 transform -translate-x-1/2 w-10 h-10  border-white rounded-full bg-transparent [box-shadow:inset_0_0_8px_10px_rgba(255,255,255,0.5)] cursor-pointer"></div>
         </Link>
-        
-        <Link href="/login">
-        <button className="text-sm  bg-slate-700 rounded text-white hover:text-green-400 px-3 py-2">
-          Ingresar
-        </button>
-        </Link>
-        
+      </div>
+
+    
+    
+
+      {/* Enlaces de la derecha */}
+      <div className="flex space-x-6 text-sm font-light text-gray-300">
+        <Link href="/register" className="hover:text-white transition">Registrarse</Link>
+        <Link href="/login" className="hover:text-white transition">Ingresar</Link>
       </div>
     </nav>
   );
