@@ -36,19 +36,21 @@ export default function HomePage() {
 
       {/* Luces azules en los bordes */}
       <div
-        className="absolute top-0 left-[-10%] w-[500px] h-[500px] blur-[140px] opacity-100"
+        className="absolute top-0 left-[-15%] w-[500px] h-[500px] blur-[140px] opacity-100"
+        style={{
+          background: "radial-gradient(circle, rgba(255,255,255,0.6) 0%, transparent 70%)",
+        }}
+      ></div>
+
+<div
+        className="absolute top-0 right-[-15%] w-[500px] h-[500px] blur-[140px] opacity-100"
         style={{
           background: "radial-gradient(circle, rgba(255,255,255,0.6) 0%, transparent 70%)",
         }}
       ></div>
 
 
-      <div
-        className="absolute top-0 right-[-10%] w-[500px] h-[500px] blur-[140px] opacity-100"
-        style={{
-          background: "radial-gradient(circle, rgba(255,255,255,0.6) 0%, transparent 70%)",
-        }}
-      ></div>
+      
 
       {/* Contenido principal */}
       <section className="relative min-h-screen flex flex-col md:flex-row items-center justify-center px-6 md:px-16 py-20 gap-10 text-center md:text-left">
@@ -113,27 +115,30 @@ export default function HomePage() {
 
         </div>
       </section>
+
+      {/* Sección de planes */}
+      <section className="bg-black text-white ">
       <div className=" text-white py-16 px-6 flex flex-col items-center">
       <h2 className="text-4xl font-bold mb-12">Selecciona tu Plan</h2>
       <div className="flex flex-col md:flex-row gap-10">
         {/* Plan Gratis */}
-        <div className="bg-black p-8 rounded-2xl shadow-lg w-80 text-center border border-gray-700">
+        <div className="bg-black p-8 rounded-2xl shadow-lg w-80 text-center border border-white">
           <h3 className="text-3xl font-semibold">Gratis</h3>
-          <p className="text-2xl font-bold mt-2 text-gray-300">$0</p>
+          <p className="text-2xl font-bold mt-2 text-gray-300">$0 COP/mes</p>
           <button className="bg-gray-500 text-white py-3 px-6 rounded-lg text-lg font-semibold mt-4 cursor-default">
             Plan Actual
           </button>
           <ul className="mt-6 space-y-3 text-gray-400 text-lg">
             <li>✅ Asignación de roles y tareas</li>
-            <li>✅ Acceso a creación y gestión de proyectos</li>
+            <li>✅ Acceso a creación y gestión de un proyeto</li>
             <li>✅ Visualización de calendario de tareas</li>
           </ul>
         </div>
 
         {/* Plan Pro */}
-        <div className="bg-black p-8 rounded-2xl shadow-lg w-80 text-center border border-gray-700">
+        <div className="bg-black p-8 rounded-2xl shadow-lg w-80 text-center border border-white">
           <h3 className="text-3xl font-semibold">Pro</h3>
-          <p className="text-2xl font-bold mt-2 text-gray-300">$25USD/mes</p>
+          <p className="text-2xl font-bold mt-2 text-gray-300">30.000 COP/mes</p>
           <button className="bg-green-500 text-white py-3 px-6 rounded-lg text-lg font-semibold mt-4 hover:bg-green-600 transition">
             Adquiere tu Plan
           </button>
@@ -146,9 +151,9 @@ export default function HomePage() {
         </div>
 
         {/* Plan Empresarial */}
-        <div className="bg-black p-8 rounded-2xl shadow-lg w-80 text-center border border-gray-700">
+        <div className="bg-black p-8 rounded-2xl shadow-lg w-80 text-center border border-white">
           <h3 className="text-3xl font-semibold">Empresarial</h3>
-          <p className="text-2xl font-bold mt-2 text-gray-300">$75USD/mes</p>
+          <p className="text-2xl font-bold mt-2 text-gray-300">120.000 COP/mes</p>
           <button className="bg-green-500 text-white py-3 px-6 rounded-lg text-lg font-semibold mt-4 hover:bg-green-600 transition">
             Adquiere tu Plan
           </button>
@@ -161,11 +166,9 @@ export default function HomePage() {
         </div>
       </div>
     </div>
-      <section>
-
       </section>
 
-      <footer className="bg-black text-white py-10 px-6 border-t border-gray-700">
+      <footer className="bg-black text-white py-10 px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center md:items-start justify-between">
           {/* Logo y texto */}
           <div className="flex flex-col items-center md:items-start space-y-2">

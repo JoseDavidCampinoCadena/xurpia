@@ -46,7 +46,7 @@ const Login = () => {
         <div className="w-1/2 h-full">
           <img
             alt="image"
-            src="https://gcdnb.pbrd.co/images/lAooOJQmVbOJ.jpg?o=1"
+            src="../images/login.png"
             className="w-full h-full object-cover"
           />
         </div>

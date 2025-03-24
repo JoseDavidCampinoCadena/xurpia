@@ -33,7 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <head>
         <title>Xurp Ia</title>
-        <meta name="color-scheme" content="light dark" />
+        <meta name="color-scheme" content="dark" />
       </head>
       <body suppressHydrationWarning>
         <ThemeProvider>

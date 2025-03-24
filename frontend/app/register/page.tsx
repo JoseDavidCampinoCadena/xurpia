@@ -80,7 +80,7 @@ export default function RegisterPage() {
         <div className="w-1/2 h-full">
           <img
             alt="image"
-            src="https://gcdnb.pbrd.co/images/g35QM8bbfMgA.png"
+            src="../images/register.png"
             className="w-full h-full object-cover"
           />
         </div>
