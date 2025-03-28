@@ -130,13 +130,13 @@ export default function CollaboratorsPage() {
                     email: collaborator.user.email,
                     role: collaborator.role
                   })}
-                  className="text-blue-400 hover:text-blue-500"
+                  className="text-white hover:text-zinc-500 bg-green-500 p-2 rounded-xl"
                 >
                   Editar
                 </button>
                 <button
                   onClick={() => handleDeleteCollaborator(collaborator.id)}
-                  className="text-red-400 hover:text-red-500"
+                  className="text-white hover:text-zinc-500 bg-red-500 p-2 rounded-xl"
                 >
                   Eliminar
                 </button>

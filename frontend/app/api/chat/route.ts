@@ -1,23 +1,46 @@
-import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import { NextResponse } from "next/server";
+import axios from "axios";
 
-const openai = new OpenAI({
-  apiKey: process.env.GROQ_API_KEY,
-  baseURL: "https://api.groq.com/openai/v1", // URL de Groq
-});
-
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const { messages } = await req.json();
+    const body = await req.json();
 
-    const response = await openai.chat.completions.create({
-      model: "mixtral-8x7b-32768", // Modelo gratuito de Groq (puedes probar también llama3-70b)
-      messages,
-    });
+    if (!body.messages || !Array.isArray(body.messages)) {
+      return NextResponse.json(
+        { error: "Formato de mensajes inválido" },
+        { status: 400 }
+      );
+    }
 
-    return NextResponse.json({ reply: response.choices[0].message.content });
-  } catch (error) {
-    console.error("Error en la API:", error);
-    return NextResponse.json({ error: "Error procesando la solicitud" }, { status: 500 });
+    console.log("📨 Enviando datos a OpenRouter:", body.messages);
+
+    const response = await axios.post(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        model: "meta-llama/llama-3.1-70b-instruct", // Modelo válido
+        messages: body.messages,
+        provider: {
+          sort: "throughput",
+        },
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "HTTP-Referer": "https://tudominio.com", // Cambia esto si tienes dominio
+          "X-Title": "Xurp IA",
+        },
+      }
+    );
+
+    console.log("✅ Respuesta de OpenRouter:", response.data);
+
+    return NextResponse.json({ reply: response.data.choices[0].message.content });
+  } catch (error: any) {
+    console.error("❌ Error en la API:", error.response?.data || error.message);
+    return NextResponse.json(
+      { error: error.response?.data || "Error en la solicitud al chatbot" },
+      { status: 500 }
+    );
   }
 }

@@ -14,15 +14,16 @@ datasource db {
 }
 
 model User {
-  id            Int            @id @default(autoincrement())
-  email         String         @unique
-  password      String
-  name          String
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  tasks         Task[]         @relation("AssignedTasks")
-  projects      Project[]      @relation("ProjectOwner")
+  id             Int            @id @default(autoincrement())
+  email          String         @unique
+  password       String
+  name           String
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  tasks          Task[]         @relation("AssignedTasks")
+  projects       Project[]      @relation("ProjectOwner")
   collaborations Collaborator[] @relation("UserCollaborations")
+  Conversation   Conversation[]
 }
 
 model Project {
@@ -38,16 +39,16 @@ model Project {
 }
 
 model Task {
-  id          Int       @id @default(autoincrement())
+  id          Int        @id @default(autoincrement())
   title       String
   description String?
   status      TaskStatus @default(PENDING)
   projectId   Int
-  project     Project   @relation("ProjectTasks", fields: [projectId], references: [id])
+  project     Project    @relation("ProjectTasks", fields: [projectId], references: [id])
   assigneeId  Int
-  assignee    User      @relation("AssignedTasks", fields: [assigneeId], references: [id])
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  assignee    User       @relation("AssignedTasks", fields: [assigneeId], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 }
 
 model Collaborator {
@@ -63,9 +64,16 @@ model Collaborator {
   @@unique([userId, projectId])
 }
 
+model Conversation {
+  id        String   @id @default(uuid())
+  userId    Int // Relaciona con el usuario
+  messages  Json // Guarda los mensajes en formato JSON
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
 
 enum TaskStatus {
   PENDING
   IN_PROGRESS
-  COMPLETED
+  COMPLETED
 }

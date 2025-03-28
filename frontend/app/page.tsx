@@ -190,7 +190,7 @@ export default function HomePage() {
               Todos los derechos reservados © 2025 <span className="mx-2">|</span> Políticas de Privacidad
             </p>
             <p className="text-gray-400 text-sm">
-              Para contacto: <span className="text-white">xurpia@gmail.com</span>
+              Para contacto: <span className="text-white">xurpia.co@gmail.com</span>
             </p>
           </div>
         </div>

@@ -1,4 +1,4 @@
-'use client'
+"use client";
 import { useState } from "react";
 import axios from "axios";
 
@@ -9,7 +9,7 @@ export default function ChatbotPage() {
 
   const sendMessage = async () => {
     if (!input.trim()) return;
-    
+
     const newMessages = [...messages, { role: "user", content: input }];
     setMessages(newMessages);
     setInput("");
@@ -19,7 +19,7 @@ export default function ChatbotPage() {
       const response = await axios.post("/api/chat", { messages: newMessages });
       setMessages([...newMessages, { role: "assistant", content: response.data.reply }]);
     } catch (error) {
-      console.error("Error fetching response:", error);
+      console.error("❌ Error en la solicitud:", error);
     } finally {
       setLoading(false);
     }

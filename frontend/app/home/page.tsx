@@ -53,56 +53,13 @@ export default function Home() {
                   Aquí estarán tus grupos de trabajo
                 </p>
               </div>
-              <Link href="/AddProject">
-                <button className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                  </svg>
-                  Nuevo Proyecto
-                </button>
-              </Link>
             </div>
           </div>
 
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              <div className={`rounded-lg shadow-sm p-6 ${
-                theme === 'dark' ? 'bg-zinc-800 text-white' : 'bg-white text-gray-900 border border-gray-200'
-              }`}>
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <img className="h-12 w-12 m-2" src="https://pngimg.com/d/letter_h_PNG71.png" alt="Logo de Heeq" />
-                  </div>
-                  <div className="ml-4">
-                    <h2 className="text-lg font-bold">Heeq</h2>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      Última conexión hace 2h
-                    </p>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      Cali, Colombia
-                    </p>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      Cantidad de integrantes: 10
-                    </p>
-                    <br />
-                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      Equipo: Público
-                    </p>
-                  </div>
-                </div>
-                <p className="mt-4">
-                  Heeq es una empresa de tecnología que ofrece soluciones de software y hardware, donde trabajamos para darte un excelente servicio y amabilidad al cliente.
-                </p>
-                <button className={`mt-4 font-bold py-2 px-4 rounded transition-colors ${
-                  theme === 'dark'
-                    ? 'bg-zinc-700 text-white hover:bg-zinc-600'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}>
-                  Entrar
-                </button>
-              </div>
-            </div>
-          </div>
+          <p>ACA SE PONE EL PROYECTO QUE CREA EL USUARIO</p>
+
+
+
         </div>
       </div>
     </div>

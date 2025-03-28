@@ -17,9 +17,12 @@ export class AddCollaboratorDto {
 
   @IsNumber()
   projectId: number;
+
+  @IsString() // ✅ Agregar este campo
+  projectName: string;
 }
 
 export class UpdateCollaboratorDto {
   @IsEnum(CollaboratorRole)
   role: CollaboratorRole;
-} 
+}
