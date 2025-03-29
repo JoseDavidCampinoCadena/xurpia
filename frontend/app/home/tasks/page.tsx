@@ -99,7 +99,7 @@ export default function TasksPage() {
         {tasks.map((task) => (
           <div
             key={task.id}
-            className="p-4 border rounded-lg shadow-sm bg-white"
+            className="p-4 border rounded-lg shadow-sm bg-black"
           >
             {editingTask === task.id ? (
               <div className="flex gap-2">
@@ -111,7 +111,7 @@ export default function TasksPage() {
                 />
                 <button
                   onClick={() => handleUpdateTask(task.id)}
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-zinc-500"
                 >
                   Guardar
                 </button>
@@ -140,7 +140,7 @@ export default function TasksPage() {
                   <select
                     value={task.status}
                     onChange={(e) => handleStatusChange(task.id, e.target.value)}
-                    className="p-2 border rounded"
+                    className="p-2 border rounded-xl"
                   >
                     <option value="PENDING">Pendiente</option>
                     <option value="IN_PROGRESS">En Progreso</option>
@@ -151,13 +151,13 @@ export default function TasksPage() {
                       setEditingTask(task.id);
                       setEditTitle(task.title);
                     }}
-                    className="p-2 text-blue-500 hover:text-blue-600"
+                    className="px-4 bg-neutral-600 text-white hover:text-zinc-200 rounded-xl"
                   >
                     Editar
                   </button>
                   <button
                     onClick={() => handleDeleteTask(task.id)}
-                    className="p-2 text-red-500 hover:text-red-600"
+                    className="p-2 bg-red-500 text-white hover:text-zinc-200 rounded-xl"
                   >
                     Eliminar
                   </button>

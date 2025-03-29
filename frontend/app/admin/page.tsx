@@ -70,7 +70,7 @@ export default function AdminDashboard() {
         <h2 className="text-xl font-semibold mb-4">Acciones Rápidas</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Link 
-            href="/admin/projects"
+            href="/admin"
             className="btn-primary p-4 rounded-lg text-center hover:opacity-90 transition-opacity"
           >
             Gestionar Proyectos
@@ -91,27 +91,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Actividad Reciente */}
-      <div className="card p-6">
-        <h2 className="text-xl font-semibold mb-4">Actividad Reciente</h2>
-        <div className="space-y-4">
-          {projects.slice(0, 5).map((project) => (
-            <div key={project.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-900 rounded-lg">
-              <div>
-                <h3 className="font-semibold">{project.name}</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {project.collaborators?.length || 0} colaboradores · {project.tasks?.length || 0} tareas
-                </p>
-              </div>
-              <Link
-                href={`/admin/projects/${project.id}`}
-                className="text-blue-500 hover:text-blue-600"
-              >
-                Ver detalles
-              </Link>
-            </div>
-          ))}
-        </div>
-      </div>
+     
     </div>
   );
 } 

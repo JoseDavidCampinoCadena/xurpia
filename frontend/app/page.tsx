@@ -3,6 +3,7 @@ import Image from 'next/image';
 import React from 'react';
 import { FaCubes, FaTools, FaDatabase, FaLink, FaFacebookF, FaInstagram, FaTelegram, FaDiscord } from "react-icons/fa";
 import Link from 'next/link';
+
 const features = [
   {
     icon: <FaCubes size={40} className="text-lime-400" />,
