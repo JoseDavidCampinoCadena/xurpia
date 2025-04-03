@@ -126,6 +126,23 @@ export default function SettingsPage() {
                 rows={4}
               />
             </div>
+            <div>
+              <label className={`block mb-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                Borrar Proyecto
+              </label>
+              <button
+                onClick={() => {
+                  if (confirm('¿Estás seguro de que quieres borrar este proyecto? Esta acción no se puede deshacer.')) {
+                    localStorage.removeItem('projectSettings'); // Elimina las configuraciones del proyecto
+                    alert('El proyecto ha sido borrado.');
+                    window.location.reload(); // Recarga la página para reflejar los cambios
+                  }
+                }}
+                className="px-6 py-2.5 bg-red-500 text-white rounded-md hover:bg-red-600 font-medium"
+              >
+                Borrar Proyecto
+              </button>
+            </div>
           </div>
         </div>
 

@@ -35,7 +35,7 @@ export default function ProgressPage() {
     {
       id: 'testing',
       name: 'Testing',
-      progress: 30,
+      progress: 0,
       icon: <FaBug className={`w-5 h-5 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-500'}`} />
     }
   ]);

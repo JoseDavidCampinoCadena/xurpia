@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.0",
     "@prisma/client": "^6.5.0",
     "@types/axios": "^0.14.4",
     "@types/js-cookie": "^3.0.6",

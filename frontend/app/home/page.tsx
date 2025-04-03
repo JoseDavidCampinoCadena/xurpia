@@ -67,15 +67,16 @@ export default function Home() {
                   <div key={project.id} className="flex items-center justify-between p-4 bg-gray-100 dark:bg-zinc-800 rounded-lg">
                     <div>
                       <h3 className="font-semibold text-gray-900 dark:text-white">{project.name}</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{project.description}</p> {/* Descripción agregada */}
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         {project.collaborators?.length || 0} colaboradores · {project.tasks?.length || 0} tareas
                       </p>
                     </div>
                     <Link
                       href={`/admin`}
-                      className=" bg-zinc-600 p-4 rounded-xl text-white hover:text-zinc-200"
+                      className="bg-zinc-600 p-4 rounded-xl text-white hover:text-zinc-200"
                     >
-                      Ver detalles
+                      Entrar
                     </Link>
                   </div>
                 ))
@@ -83,6 +84,7 @@ export default function Home() {
                 <p className="text-gray-600 dark:text-gray-400">No hay proyectos recientes.</p>
               )}
             </div>
+
           </div>
 
 
