@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { FaChevronLeft, FaChevronRight, FaTimes } from 'react-icons/fa';
+import { FaChevronLeft, FaChevronRight, FaTimes, FaEdit, FaTrash } from 'react-icons/fa';
 
 interface Event {
   id: number;
@@ -11,28 +11,21 @@ interface Event {
   type: 'meeting' | 'deadline' | 'other';
 }
 
-interface QuickEventModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  selectedDate: string;
-  onSave: (event: Omit<Event, 'id'>) => void;
-}
+const monthNames = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+];
 
-const QuickEventModal = ({ isOpen, onClose, selectedDate, onSave }: QuickEventModalProps) => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [type, setType] = useState<Event['type']>('other');
+const QuickEventModal = ({ isOpen, onClose, selectedDate, onSave, existingEvent }: any) => {
+  const [title, setTitle] = useState(existingEvent?.title || '');
+  const [description, setDescription] = useState(existingEvent?.description || '');
+  const [type, setType] = useState(existingEvent?.type || 'other');
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({
-      title,
-      description,
-      date: selectedDate,
-      type
-    });
+    onSave({ title, description, date: selectedDate, type }, existingEvent?.id);
     setTitle('');
     setDescription('');
     setType('other');
@@ -44,7 +37,7 @@ const QuickEventModal = ({ isOpen, onClose, selectedDate, onSave }: QuickEventMo
       <div className="bg-white dark:bg-zinc-800 rounded-lg p-4 w-full max-w-md">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Agregar evento para {selectedDate}
+            {existingEvent ? 'Editar evento' : 'Agregar evento'}
           </h3>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
             <FaTimes />
@@ -58,10 +51,9 @@ const QuickEventModal = ({ isOpen, onClose, selectedDate, onSave }: QuickEventMo
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Título del evento"
               className="w-full bg-gray-50 dark:bg-zinc-900 text-gray-900 dark:text-white px-4 py-2 rounded-md border border-gray-200 dark:border-zinc-700"
-              autoFocus
               required
+              autoFocus
             />
           </div>
 
@@ -70,7 +62,6 @@ const QuickEventModal = ({ isOpen, onClose, selectedDate, onSave }: QuickEventMo
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Descripción del evento"
               className="w-full bg-gray-50 dark:bg-zinc-900 text-gray-900 dark:text-white px-4 py-2 rounded-md border border-gray-200 dark:border-zinc-700 resize-none"
               rows={3}
             />
@@ -101,7 +92,7 @@ const QuickEventModal = ({ isOpen, onClose, selectedDate, onSave }: QuickEventMo
               type="submit"
               className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
             >
-              Guardar
+              {existingEvent ? 'Guardar cambios' : 'Guardar'}
             </button>
           </div>
         </form>
@@ -110,43 +101,15 @@ const QuickEventModal = ({ isOpen, onClose, selectedDate, onSave }: QuickEventMo
   );
 };
 
-export default function Calendar() {
+const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [events, setEvents] = useState<Event[]>([
-    {
-      id: 1,
-      title: 'Reunión de equipo',
-      description: 'Revisión semanal de progreso del proyecto',
-      date: '2024-07-15',
-      type: 'meeting'
-    },
-    {
-      id: 2,
-      title: 'Entrega de proyecto',
-      description: 'Entrega final del módulo de autenticación',
-      date: '2024-07-20',
-      type: 'deadline'
-    }
-  ]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [isQuickEventModalOpen, setIsQuickEventModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
+  const [eventBeingEdited, setEventBeingEdited] = useState<Event | null>(null);
 
-  const daysInMonth = new Date(
-    currentDate.getFullYear(),
-    currentDate.getMonth() + 1,
-    0
-  ).getDate();
-
-  const firstDayOfMonth = new Date(
-    currentDate.getFullYear(),
-    currentDate.getMonth(),
-    1
-  ).getDay();
-
-  const monthNames = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-  ];
+  const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+  const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
 
   const previousMonth = () => {
     setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() - 1)));
@@ -156,30 +119,42 @@ export default function Calendar() {
     setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + 1)));
   };
 
-  const getEventForDay = (day: number) => {
+  const getEventsForDay = (day: number) => {
     const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return events.find(event => event.date === dateStr);
+    return events.filter(event => event.date === dateStr);
   };
 
   const getEventColor = (type: string) => {
     switch (type) {
-      case 'meeting':
-        return 'bg-blue-500';
-      case 'deadline':
-        return 'bg-red-500';
-      default:
-        return 'bg-green-500';
+      case 'meeting': return 'bg-blue-500';
+      case 'deadline': return 'bg-red-500';
+      default: return 'bg-green-500';
     }
   };
 
   const handleDayClick = (day: number) => {
     const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     setSelectedDate(dateStr);
+    setEventBeingEdited(null);
     setIsQuickEventModalOpen(true);
   };
 
-  const handleQuickEventSave = (newEvent: Omit<Event, 'id'>) => {
-    setEvents(prev => [...prev, { ...newEvent, id: Date.now() }]);
+  const handleQuickEventSave = (eventData: Omit<Event, 'id'>, eventId?: number) => {
+    if (eventId) {
+      setEvents(prev => prev.map(e => (e.id === eventId ? { ...e, ...eventData } : e)));
+    } else {
+      setEvents(prev => [...prev, { ...eventData, id: Date.now() }]);
+    }
+  };
+
+  const handleEdit = (event: Event) => {
+    setSelectedDate(event.date);
+    setEventBeingEdited(event);
+    setIsQuickEventModalOpen(true);
+  };
+
+  const handleDelete = (eventId: number) => {
+    setEvents(prev => prev.filter(e => e.id !== eventId));
   };
 
   return (
@@ -189,16 +164,10 @@ export default function Calendar() {
           {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
         </h2>
         <div className="flex gap-2">
-          <button
-            onClick={previousMonth}
-            className="p-2 bg-gray-100 dark:bg-zinc-700 text-gray-700 dark:text-white rounded-md hover:bg-gray-200 dark:hover:bg-zinc-600"
-          >
+          <button onClick={previousMonth} className="p-2 bg-gray-100 dark:bg-zinc-700 text-gray-700 dark:text-white rounded-md hover:bg-gray-200 dark:hover:bg-zinc-600">
             <FaChevronLeft />
           </button>
-          <button
-            onClick={nextMonth}
-            className="p-2 bg-gray-100 dark:bg-zinc-700 text-gray-700 dark:text-white rounded-md hover:bg-gray-200 dark:hover:bg-zinc-600"
-          >
+          <button onClick={nextMonth} className="p-2 bg-gray-100 dark:bg-zinc-700 text-gray-700 dark:text-white rounded-md hover:bg-gray-200 dark:hover:bg-zinc-600">
             <FaChevronRight />
           </button>
         </div>
@@ -210,15 +179,15 @@ export default function Calendar() {
             {day}
           </div>
         ))}
-        
+
         {Array.from({ length: firstDayOfMonth }).map((_, index) => (
           <div key={`empty-${index}`} className="aspect-square"></div>
         ))}
 
         {Array.from({ length: daysInMonth }).map((_, index) => {
           const day = index + 1;
-          const event = getEventForDay(day);
-          
+          const dayEvents = getEventsForDay(day);
+
           return (
             <div
               key={day}
@@ -226,12 +195,13 @@ export default function Calendar() {
               className="aspect-square bg-gray-50 dark:bg-zinc-900 rounded-lg flex flex-col items-center justify-center relative hover:bg-gray-100 dark:hover:bg-zinc-700 cursor-pointer transition-colors"
             >
               <span className="text-gray-900 dark:text-white">{day}</span>
-              {event && (
+              {dayEvents.map((event, i) => (
                 <div
-                  className={`absolute bottom-1 w-2 h-2 rounded-full ${getEventColor(event.type)}`}
+                  key={i}
+                  className={`absolute bottom-1 w-2 h-2 rounded-full ${getEventColor(event.type)} ${i > 0 ? 'left-1.5' : ''}`}
                   title={event.title}
-                ></div>
-              )}
+                />
+              ))}
             </div>
           );
         })}
@@ -239,10 +209,43 @@ export default function Calendar() {
 
       <QuickEventModal
         isOpen={isQuickEventModalOpen}
-        onClose={() => setIsQuickEventModalOpen(false)}
-        date={selectedDate}
+        onClose={() => {
+          setIsQuickEventModalOpen(false);
+          setEventBeingEdited(null);
+        }}
+        selectedDate={selectedDate}
         onSave={handleQuickEventSave}
+        existingEvent={eventBeingEdited}
       />
+
+      {events.length > 0 && (
+        <div className="mt-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Próximos eventos</h3>
+          <ul className="space-y-2">
+            {events
+              .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+              .map((event) => (
+                <li key={event.id} className="bg-gray-50 dark:bg-zinc-900 p-3 rounded-lg border border-gray-200 dark:border-zinc-700 flex justify-between items-center">
+                  <div>
+                    <p className="text-gray-800 dark:text-gray-100 font-medium">{event.title}</p>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">{event.date} - {event.type === 'meeting' ? 'Reunión' : event.type === 'deadline' ? 'Fecha límite' : 'Otro'}</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">{event.description}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleEdit(event)} className="text-blue-500 hover:text-blue-700">
+                      <FaEdit />
+                    </button>
+                    <button onClick={() => handleDelete(event.id)} className="text-red-500 hover:text-red-700">
+                      <FaTrash />
+                    </button>
+                  </div>
+                </li>
+              ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
-} 
+};
+
+export default Calendar;

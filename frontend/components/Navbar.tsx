@@ -10,13 +10,14 @@ export default function Navbar() {
         <Link href="#" className="hover:text-white transition"><FaInstagram /></Link>
         <Link href="#" className="hover:text-white transition"><FaXTwitter /></Link>
         <Link href="#" className="hover:text-white transition"><FaDiscord /></Link>
-        <Link href="/">
-          <div className="absolute left-1/2 transform -translate-x-1/2 w-10 h-10  border-white rounded-full bg-transparent [box-shadow:inset_0_0_8px_10px_rgba(255,255,255,0.5)] cursor-pointer"></div>
-        </Link>
       </div>
 
-    
-    
+      {/* Logo centrado */}
+      <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center justify-center">
+        <Link href="/" className="relative w-28 h-8 rounded-full   cursor-pointer overflow-hidden shadow-md">
+          <span className="absolute inset-0 flex items-center justify-center text-white font-semibold text-sm">XURP IA</span>
+        </Link>
+      </div>
 
       {/* Enlaces de la derecha */}
       <div className="flex space-x-6 text-sm font-light text-gray-300">
