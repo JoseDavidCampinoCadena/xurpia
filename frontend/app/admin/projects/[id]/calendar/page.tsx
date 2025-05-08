@@ -1,206 +1,270 @@
 'use client';
 
-import { useState } from 'react';
-import Calendar from '../../../components/Calendar';
+import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { IoClose } from 'react-icons/io5';
-import { Project } from '../../../../hooks/useProjects';
 
 interface Event {
   id: number;
   title: string;
+  description: string;
   date: string;
   type: 'meeting' | 'deadline' | 'other';
-  description: string;
 }
 
+const getFluorColor = (type: string) => {
+  switch (type) {
+    case 'meeting':
+      return 'bg-green-400 text-black';
+    case 'deadline':
+      return 'bg-pink-500 text-black';
+    default:
+      return 'bg-lime-400 text-black';
+  }
+};
+
 export default function CalendarPage() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [events, setEvents] = useState<Event[]>([
-    {
-      id: 1,
-      title: 'Reunión de equipo',
-      date: '2024-07-15',
-      type: 'meeting',
-      description: 'Revisión semanal de progreso'
-    },
-    {
-      id: 2,
-      title: 'Entrega de proyecto',
-      date: '2024-07-20',
-      type: 'deadline',
-      description: 'Entrega final del módulo de autenticación'
-    }
-  ]);
+  const params = useParams();
+  const [events, setEvents] = useState<Event[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [showModal, setShowModal] = useState(false);
+  const [newEvent, setNewEvent] = useState({
+    title: '',
+    description: '',
+    type: 'meeting' as Event['type'],
+  });
+  const [loading, setLoading] = useState(false);
   const [currentProjectId, setCurrentProjectId] = useState<number | null>(null);
 
-  const [newEvent, setNewEvent] = useState<Partial<Event>>({
-    title: '',
-    date: '',
-    type: 'other',
-    description: ''
-  });
+  useEffect(() => {
+    if (params && params.id) {
+      const idNum = Number(params.id);
+      if (!isNaN(idNum)) setCurrentProjectId(idNum);
+    }
+  }, [params]);
+
+  useEffect(() => {
+    if (currentProjectId) {
+      setLoading(true);
+      fetch(`/api/eventos/${currentProjectId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) setEvents(data);
+          else if (Array.isArray(data.events)) setEvents(data.events);
+        })
+        .catch(() => setEvents([]))
+        .finally(() => setLoading(false));
+    }
+  }, [currentProjectId]);
+
+  const openModal = (date: string) => {
+    setSelectedDate(date);
+    setShowModal(true);
+    setNewEvent({ title: '', description: '', type: 'meeting' });
+  };
 
   const handleAddEvent = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newEvent.title && newEvent.date) {
-      try {
-        const response = await fetch('http://localhost:3001/events', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            title: newEvent.title,
-            date: newEvent.date,
-            type: newEvent.type,
-            description: newEvent.description,
-            projectId: currentProjectId, // Cambia esto por el ID del proyecto actual
-          }),
-        });
-  
-        if (!response.ok) {
-          throw new Error('Error al guardar el evento');
-        }
-  
-        const savedEvent = await response.json();
-  
-        setEvents([
-          ...events,
-          {
-            id: savedEvent.id,
-            title: savedEvent.title,
-            date: savedEvent.date,
-            type: savedEvent.type,
-            description: savedEvent.description,
-          },
-        ]);
-  
-        setNewEvent({ title: '', date: '', type: 'other', description: '' });
-        setIsModalOpen(false);
-      } catch (error) {
-        console.error('Error al añadir el evento:', error);
-        alert('Hubo un error al guardar el evento.');
+    if (!currentProjectId) return;
+    setLoading(true);
+    try {
+      // Convertir la fecha seleccionada a ISO string (UTC)
+      const dateISO = selectedDate ? new Date(selectedDate + 'T00:00:00Z').toISOString() : '';
+      const res = await fetch(`/api/eventos/${currentProjectId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newEvent.title,
+          description: newEvent.description,
+          type: newEvent.type,
+          date: dateISO,
+          projectId: currentProjectId, // El DTO lo requiere
+        }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData?.error || 'Error al guardar el evento');
       }
+      const saved = await res.json();
+      setEvents(prev => [...prev, saved]);
+      setShowModal(false);
+    } catch (err: any) {
+      alert('No se pudo guardar el evento: ' + (err?.message || 'Error desconocido'));
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Calendario simple
+  const [calendarDate, setCalendarDate] = useState(() => {
+    // Siempre inicializa con el primer día del mes actual para evitar desfases
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
+  const year = calendarDate.getFullYear();
+  const month = calendarDate.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDay = new Date(year, month, 1).getDay();
+  const monthName = calendarDate.toLocaleString('es-ES', { month: 'long' });
+
+  const getEventsForDay = (d: number) => {
+    const dateObj = new Date(year, month, d);
+    const dateStr = dateObj.toISOString().slice(0, 10); // Siempre formato YYYY-MM-DD
+    return events.filter(ev => ev.date === dateStr);
+  };
+
+  const handleDayClick = (day: number) => {
+    const dateObj = new Date(year, month, day);
+    const isoDate = dateObj.toISOString().slice(0, 10);
+    openModal(isoDate);
+  };
+
   return (
-    <div className="p-8">
-      <div className="flex justify-around items-center mb-6">
-        <h1 className="text-3xl font-bold text-black dark:text-white">Calendario de Proyecto</h1>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
-        >
-          Añadir Evento
-        </button>
-      </div>
-
-      <Calendar />
-
-      {/* Lista de eventos próximos */}
-      <div className="mt-8 bg-zinc-800 rounded-lg p-6">
-        <h2 className="text-xl font-semibold text-white mb-4">Eventos Próximos</h2>
-        <div className="space-y-4">
-          {events.map((event) => (
-            <div key={event.id} className="bg-zinc-900 rounded-lg p-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-white font-semibold">{event.title}</h3>
-                  <p className="text-gray-400 text-sm">{event.date}</p>
-                  <p className="text-gray-400 text-sm mt-2">{event.description}</p>
-                </div>
-                <span className={`px-2 py-1 rounded text-xs ${
-                  event.type === 'meeting' ? 'bg-blue-500' :
-                  event.type === 'deadline' ? 'bg-red-500' : 'bg-green-500'
-                } text-white`}>
-                  {event.type}
-                </span>
-              </div>
-            </div>
+    <div className="min-h-screen w-full bg-zinc-950 text-lime-400 flex flex-col items-center justify-center p-0 m-0">
+      <h1 className="text-3xl font-bold mb-8 text-lime-400 mt-8">Calendario de Proyecto</h1>
+      <div className="bg-zinc-900 rounded-lg shadow-lg p-6 w-full max-w-7xl mx-auto flex-1 flex flex-col justify-center">
+        <div className="flex justify-between items-center mb-4">
+          <span className="text-xl font-semibold text-lime-400">{monthName.charAt(0).toUpperCase() + monthName.slice(1)} {year}</span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCalendarDate(new Date(year, month - 1, 1))}
+              className="px-2 py-1 rounded bg-zinc-800 text-lime-400 hover:bg-zinc-700"
+            >
+              {'<'}
+            </button>
+            <button
+              onClick={() => setCalendarDate(new Date(year, month + 1, 1))}
+              className="px-2 py-1 rounded bg-zinc-800 text-lime-400 hover:bg-zinc-700"
+            >
+              {'>'}
+            </button>
+          </div>
+        </div>
+        <div className="grid grid-cols-7 gap-2 mb-2 min-h-[70vh]">
+          {["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"].map(d => (
+            <div key={d} className="text-center text-lime-400 font-bold text-lg">{d}</div>
           ))}
+          {Array.from({ length: firstDay }).map((_, i) => (
+            <div key={i}></div>
+          ))}
+          {Array.from({ length: daysInMonth }).map((_, i) => {
+            const day = i + 1;
+            const dayEvents = getEventsForDay(day);
+            return (
+              <div
+                key={day}
+                className={`relative rounded-lg p-2 cursor-pointer border border-zinc-800 hover:border-lime-400 transition group bg-zinc-800 min-h-[7vh] flex flex-col items-center justify-start`}
+                onClick={() => handleDayClick(day)}
+              >
+                <span className="text-white font-bold text-lg">{day}</span>
+                {dayEvents.length > 0 && (
+                  <div className="absolute top-1 right-1 flex flex-col gap-1">
+                    {dayEvents.map(ev => (
+                      <span key={ev.id} className={`block w-3 h-3 rounded-full border-2 border-zinc-900 ${getFluorColor(ev.type)}`}></span>
+                    ))}
+                  </div>
+                )}
+                {/* Tooltip de eventos */}
+                {dayEvents.length > 0 && (
+                  <div className="hidden group-hover:block absolute z-20 left-1/2 -translate-x-1/2 top-10 bg-zinc-900 text-lime-400 p-2 rounded shadow-xl min-w-[180px]">
+                    {dayEvents.map(ev => (
+                      <div key={ev.id} className="mb-2 last:mb-0">
+                        <div className="font-bold">{ev.title}</div>
+                        <div className="text-xs">{ev.description}</div>
+                        <div className="text-xs italic">{ev.type}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
-
+      {/* Lista de eventos próximos */}
+      <div className="w-full max-w-7xl mx-auto mt-8 bg-zinc-900 rounded-lg p-6">
+        <h2 className="text-xl font-bold mb-4 text-lime-400">Eventos Próximos</h2>
+        {events.length === 0 ? (
+          <div className="text-gray-400">No hay eventos próximos.</div>
+        ) : (
+          <div className="space-y-4">
+            {events
+              .filter(ev => new Date(ev.date) >= new Date())
+              .sort((a, b) => a.date.localeCompare(b.date))
+              .map(ev => (
+                <div key={ev.id} className="bg-zinc-800 rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between border-l-4 border-lime-400">
+                  <div>
+                    <div className="text-lg font-bold text-white">{ev.title}</div>
+                    <div className="text-lime-300 text-sm mb-1">
+                      {new Date(ev.date + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                    </div>
+                    <div className="text-gray-300 text-sm mb-1">{ev.description}</div>
+                  </div>
+                  <div className="flex flex-col items-end mt-2 md:mt-0">
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${getFluorColor(ev.type)}`}>{ev.type}</span>
+                  </div>
+                </div>
+              ))}
+          </div>
+        )}
+      </div>
       {/* Modal para añadir evento */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-zinc-800 rounded-lg p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-white">Añadir Evento</h2>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-white"
-              >
-                <IoClose size={24} />
-              </button>
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="bg-zinc-900 rounded-lg p-8 w-full max-w-md border-2 border-lime-400 relative">
+            <button
+              onClick={() => setShowModal(false)}
+              className="absolute top-2 right-2 text-lime-400 hover:text-white"
+            >
+              <IoClose size={28} />
+            </button>
+            <h2 className="text-2xl font-bold mb-2 text-lime-400">Añadir Evento</h2>
+            <div className="mb-4 text-lime-300 font-semibold text-center">
+              {selectedDate && new Date(selectedDate + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </div>
-
             <form onSubmit={handleAddEvent} className="space-y-4">
               <div>
-                <label className="block text-gray-400 mb-2">Título</label>
+                <label className="block text-lime-400 mb-1">Título</label>
                 <input
                   type="text"
                   value={newEvent.title}
-                  onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
-                  className="w-full bg-zinc-900 text-white px-4 py-2 rounded-md"
+                  onChange={e => setNewEvent(ev => ({ ...ev, title: e.target.value }))}
+                  className="w-full px-3 py-2 rounded bg-zinc-800 text-white border border-lime-400 focus:outline-none focus:ring-2 focus:ring-lime-400"
                   required
                 />
               </div>
-
               <div>
-                <label className="block text-gray-400 mb-2">Fecha</label>
-                <input
-                  type="date"
-                  value={newEvent.date}
-                  onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
-                  className="w-full bg-zinc-900 text-white px-4 py-2 rounded-md"
-                  required
+                <label className="block text-lime-400 mb-1">Descripción</label>
+                <textarea
+                  value={newEvent.description}
+                  onChange={e => setNewEvent(ev => ({ ...ev, description: e.target.value }))}
+                  className="w-full px-3 py-2 rounded bg-zinc-800 text-white border border-lime-400 focus:outline-none focus:ring-2 focus:ring-lime-400"
+                  rows={3}
                 />
               </div>
-
               <div>
-                <label className="block text-gray-400 mb-2">Tipo</label>
+                <label className="block text-lime-400 mb-1">Tipo</label>
                 <select
                   value={newEvent.type}
-                  onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value as any })}
-                  className="w-full bg-zinc-900 text-white px-4 py-2 rounded-md"
+                  onChange={e => setNewEvent(ev => ({ ...ev, type: e.target.value as Event['type'] }))}
+                  className="w-full px-3 py-2 rounded bg-zinc-800 text-white border border-lime-400 focus:outline-none focus:ring-2 focus:ring-lime-400"
                 >
-                  <option value="meeting">Reunión</option>n
+                  <option value="meeting">Reunión</option>
                   <option value="deadline">Fecha límite</option>
                   <option value="other">Otro</option>
                 </select>
               </div>
-
-              <div>
-                <label className="block text-gray-400 mb-2">Descripción</label>
-                <textarea
-                  value={newEvent.description}
-                  onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
-                  className="w-full bg-zinc-900 text-white px-4 py-2 rounded-md"
-                  rows={3}
-                />
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 bg-zinc-700 text-white rounded-md hover:bg-zinc-600"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
-                >
-                  Añadir
-                </button>
-              </div>
+              <button
+                type="submit"
+                className="w-full py-2 mt-2 rounded bg-lime-400 text-black font-bold hover:bg-lime-300 transition"
+                disabled={loading}
+              >
+                {loading ? 'Guardando...' : 'Guardar Evento'}
+              </button>
             </form>
           </div>
         </div>
       )}
     </div>
   );
-} 
+}
