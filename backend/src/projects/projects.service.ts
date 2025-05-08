@@ -9,11 +9,16 @@ export class ProjectsService {
   async create(userId: number, dto: CreateProjectDto) {
     const project = await this.prisma.project.create({
       data: {
-        ...dto,
-        ownerId: userId,
+        name: dto.name,
+        description: dto.description,
+        owner: {
+          connect: { id: userId },
+        },
         collaborators: {
           create: {
-            userId,
+            user: {
+              connect: { id: userId },
+            },
             role: 'ADMIN',
           },
         },

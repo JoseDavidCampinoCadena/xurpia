@@ -11,7 +11,9 @@ export class NotesService {
   async create(createNoteDto: CreateNoteDto, userId: number): Promise<Note> {
     return this.prisma.note.create({
       data: {
-        ...createNoteDto,
+        title: createNoteDto.title,
+        content: createNoteDto.content,
+        completed: createNoteDto.completed || false,
         user: {
           connect: { id: userId },
         },
@@ -52,7 +54,11 @@ export class NotesService {
       where: {
         id,
       },
-      data: updateNoteDto,
+      data: {
+        title: updateNoteDto.title,
+        content: updateNoteDto.content,
+        completed: updateNoteDto.completed
+      },
     });
   }
 

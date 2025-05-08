@@ -2,7 +2,7 @@
 // Página principal de eventos: muestra y permite crear eventos para un proyecto
 'use client';
 import { useEffect, useState } from 'react';
-import { getEventsByProject, createEventForProject } from '../eventos/eventos.api';
+import { getEvents, createEvent } from '../api/events.api';
 
 // Define la interfaz Event localmente
 interface Event {
@@ -26,7 +26,7 @@ export default function EventosPage({ searchParams }: EventosPageProps) {
   useEffect(() => {
     if (projectId) {
       setLoading(true);
-      getEventsByProject(Number(projectId)).then(setEvents).finally(() => setLoading(false));
+      getEvents(String(projectId)).then(setEvents).finally(() => setLoading(false));
     }
   }, [projectId]);
 
@@ -38,7 +38,7 @@ export default function EventosPage({ searchParams }: EventosPageProps) {
     e.preventDefault();
     if (!projectId) return;
     setLoading(true);
-    const newEvent = await createEventForProject(Number(projectId), form);
+    const newEvent = await createEvent(String(projectId), form);
     setEvents([...events, newEvent]);
     setForm({ title: '', date: '', type: 'meeting', description: '' });
     setLoading(false);

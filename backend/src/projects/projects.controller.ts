@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Request,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto, UpdateProjectDto } from './dto/project.dto';
@@ -20,30 +21,36 @@ export class ProjectsController {
 
   @Post()
   create(@Request() req, @Body() createProjectDto: CreateProjectDto) {
-    return this.projectsService.create(req.user.userId, createProjectDto);
+    return this.projectsService.create(req.user.id, createProjectDto);
   }
 
   @Get()
   findAll(@Request() req) {
-    return this.projectsService.findAll(req.user.userId);
+    return this.projectsService.findAll(req.user.id);
   }
 
   @Get(':id')
-  findOne(@Request() req, @Param('id') id: string) {
-    return this.projectsService.findOne(req.user.userId, +id);
+  findOne(
+    @Request() req,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.projectsService.findOne(req.user.id, id);
   }
 
   @Patch(':id')
   update(
     @Request() req,
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateProjectDto: UpdateProjectDto,
   ) {
-    return this.projectsService.update(req.user.userId, +id, updateProjectDto);
+    return this.projectsService.update(req.user.id, id, updateProjectDto);
   }
 
   @Delete(':id')
-  remove(@Request() req, @Param('id') id: string) {
-    return this.projectsService.remove(req.user.userId, +id);
+  remove(
+    @Request() req,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.projectsService.remove(req.user.id, id);
   }
 } 

@@ -3,6 +3,7 @@
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { IoClose } from 'react-icons/io5';
+import { getEvents, createEvent } from '../../../../api/events.api';
 
 interface Event {
   id: number;
@@ -46,8 +47,7 @@ export default function CalendarPage() {
   useEffect(() => {
     if (currentProjectId) {
       setLoading(true);
-      fetch(`/api/eventos/${currentProjectId}`)
-        .then(res => res.json())
+      getEvents(String(currentProjectId))
         .then(data => {
           if (Array.isArray(data)) setEvents(data);
           else if (Array.isArray(data.events)) setEvents(data.events);
@@ -70,22 +70,14 @@ export default function CalendarPage() {
     try {
       // Convertir la fecha seleccionada a ISO string (UTC)
       const dateISO = selectedDate ? new Date(selectedDate + 'T00:00:00Z').toISOString() : '';
-      const res = await fetch(`/api/eventos/${currentProjectId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: newEvent.title,
-          description: newEvent.description,
-          type: newEvent.type,
-          date: dateISO,
-          projectId: currentProjectId, // El DTO lo requiere
-        }),
+      const saved = await createEvent(String(currentProjectId), {
+        title: newEvent.title,
+        description: newEvent.description,
+        type: newEvent.type,
+        date: dateISO,
+        projectId: currentProjectId, // El DTO lo requiere
       });
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData?.error || 'Error al guardar el evento');
-      }
-      const saved = await res.json();
+
       setEvents(prev => [...prev, saved]);
       setShowModal(false);
     } catch (err: any) {
@@ -109,8 +101,9 @@ export default function CalendarPage() {
 
   const getEventsForDay = (d: number) => {
     const dateObj = new Date(year, month, d);
-    const dateStr = dateObj.toISOString().slice(0, 10); // Siempre formato YYYY-MM-DD
-    return events.filter(ev => ev.date === dateStr);
+    const dateStr = dateObj.toISOString().slice(0, 10); // Formato YYYY-MM-DD
+    // Compara el inicio de la cadena de fecha del evento con dateStr
+    return events.filter(ev => ev.date && ev.date.startsWith(dateStr));
   };
 
   const handleDayClick = (day: number) => {
@@ -196,7 +189,8 @@ export default function CalendarPage() {
                   <div>
                     <div className="text-lg font-bold text-white">{ev.title}</div>
                     <div className="text-lime-300 text-sm mb-1">
-                      {new Date(ev.date + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                      {/* Usar new Date(ev.date) directamente y especificar timeZone si es necesario */}
+                      {new Date(ev.date).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}
                     </div>
                     <div className="text-gray-300 text-sm mb-1">{ev.description}</div>
                   </div>

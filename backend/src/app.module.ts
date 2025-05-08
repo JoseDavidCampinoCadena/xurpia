@@ -7,6 +7,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { CollaboratorsModule } from './collaborators/collaborators.module';
 import { EmailModule } from './email/email.module';
 import { NotesModule } from './notes/notes.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { NotesModule } from './notes/notes.module';
     TasksModule,
     CollaboratorsModule,
     NotesModule,
+    EventsModule,
   ],
 })
 export class AppModule {}
