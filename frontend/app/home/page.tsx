@@ -3,13 +3,69 @@
 import React from 'react';
 import Link from 'next/link';
 import { useTheme } from '@/app/contexts/ThemeContext';
-import { useProjects} from '../hooks/useProjects';
 
+import { useEffect, useState } from 'react';
+import { useProjects } from '@/app/hooks/useProjects';
 
 
 export default function Home() {
   const { theme } = useTheme();
   const { projects } = useProjects();
+  const { currentProjectId } = useProjects();
+  const [joinCode, setJoinCode] = useState('');
+    const [joinError, setJoinError] = useState('');
+  
+    useEffect(() => {
+      if (currentProjectId) {
+        refreshCollaborators();
+        fetchProjectCode();
+      }
+    }, [currentProjectId]);
+
+  const handleJoinWithCode = async () => {
+      try {
+        if (!joinCode.trim()) {
+          setJoinError('Debes ingresar un código válido.');
+          return;
+        }
+  
+        const userEmail = localStorage.getItem('loggedInUserEmail');
+        if (!userEmail) {
+          setJoinError('No se encontró el usuario actual. Inicia sesión nuevamente.');
+          return;
+        }
+  
+        const project = await projectsApi.getProjectByCode(joinCode.trim());
+  
+        if (!project || !project.id) {
+          setJoinError('Proyecto no encontrado.');
+          return;
+        }
+  
+        await collaboratorsApi.addCollaboratorByEmail({
+          projectId: project.id,
+          email: userEmail,
+          role: 'MEMBER',
+        });
+  
+        alert('¡Te uniste correctamente al proyecto!');
+        setJoinCode('');
+        setJoinError('');
+      } catch (error: any) {
+        console.error('Error al unirse al proyecto:', error);
+        setJoinError('No se pudo unir al proyecto. Verifica el código o si ya eres colaborador.');
+      }
+    };
+
+    const handleCopyCode = async () => {
+      if (!projectCode) return;
+      try {
+        await navigator.clipboard.writeText(projectCode);
+        alert('¡Código copiado al portapapeles!');
+      } catch (err) {
+        console.error('Error al copiar:', err);
+      }
+    };
 
   return (
     <div className={`font-albert container mx-auto p-6 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
@@ -59,6 +115,33 @@ export default function Home() {
             </div>
           </div>
 
+            <Link href={'/home/addproject'}>
+            <div className='Addproject flex justify-center mb-4 bg-green-500 rounded-lg shadow-md pr-6 p-4 w-[160px] cursor-pointer'>
+              <button>Crear Proyecto</button>
+            </div>
+            </Link>
+
+            <div className="bg-gray-100 dark:bg-zinc-800 p-4 rounded-md mb-6">
+        <p className="text-zinc-800 dark:text-white font-medium">¿Tienes un código de proyecto?</p>
+        <div className="flex items-center gap-2 mt-2">
+          <input
+            type="text"
+            placeholder="Ingresa el código"
+            className="px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white w-full"
+            value={joinCode}
+            onChange={(e) => setJoinCode(e.target.value)}
+          />
+          <button
+            onClick={handleJoinWithCode}
+            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+          >
+            Unirse
+          </button>
+        </div>
+        {joinError && <p className="text-red-500 text-sm mt-2">{joinError}</p>}
+      </div>
+            
+
           <div className="card p-6 bg-white dark:bg-zinc-900 rounded-lg shadow-md mb-6">
             
             <div className="space-y-4">
@@ -73,7 +156,7 @@ export default function Home() {
                       </p>
                     </div>
                     <Link
-                      href={`/admin`}
+                      href={`/admin/projects/${project.id}`}
                       className="bg-zinc-600 p-4 rounded-xl text-white hover:text-zinc-200"
                     >
                       Entrar

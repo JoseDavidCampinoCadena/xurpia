@@ -6,6 +6,7 @@ import { ProjectsModule } from './projects/projects.module';
 import { TasksModule } from './tasks/tasks.module';
 import { CollaboratorsModule } from './collaborators/collaborators.module';
 import { EmailModule } from './email/email.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [

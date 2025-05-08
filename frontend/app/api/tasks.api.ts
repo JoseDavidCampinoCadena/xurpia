@@ -5,7 +5,7 @@ export interface Task {
   title: string;
   description?: string;
   status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
-  projectId: number;
+  projectId?: number | null; // AHORA es opcional
   assigneeId: number;
   createdAt: string;
   updatedAt: string;
@@ -14,17 +14,17 @@ export interface Task {
     name: string;
     email: string;
   };
-  project: {
+  project?: {
     id: number;
     name: string;
-  };
+  } | null; // AHORA es opcional
 }
 
 export interface CreateTaskData {
   title: string;
   description?: string;
-  projectId: number;
   assigneeId: number;
+  projectId?: number; // Opcional en creación
   status?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
 }
 
@@ -62,4 +62,4 @@ export const tasksApi = {
   delete: async (id: number): Promise<void> => {
     await axios.delete(`/tasks/${id}`);
   },
-}; 
+};

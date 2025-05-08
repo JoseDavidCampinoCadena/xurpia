@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import Calendar from '../components/Calendar';
+import Calendar from '../../../components/Calendar';
 import { IoClose } from 'react-icons/io5';
+import { Project } from '../../../../hooks/useProjects';
 
 interface Event {
   id: number;
@@ -30,6 +31,7 @@ export default function CalendarPage() {
       description: 'Entrega final del módulo de autenticación'
     }
   ]);
+  const [currentProjectId, setCurrentProjectId] = useState<number | null>(null);
 
   const [newEvent, setNewEvent] = useState<Partial<Event>>({
     title: '',
@@ -38,21 +40,47 @@ export default function CalendarPage() {
     description: ''
   });
 
-  const handleAddEvent = (e: React.FormEvent) => {
+  const handleAddEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newEvent.title && newEvent.date) {
-      setEvents([
-        ...events,
-        {
-          id: Date.now(),
-          title: newEvent.title,
-          date: newEvent.date,
-          type: newEvent.type as 'meeting' | 'deadline' | 'other',
-          description: newEvent.description || ''
+      try {
+        const response = await fetch('http://localhost:3001/events', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title: newEvent.title,
+            date: newEvent.date,
+            type: newEvent.type,
+            description: newEvent.description,
+            projectId: currentProjectId, // Cambia esto por el ID del proyecto actual
+          }),
+        });
+  
+        if (!response.ok) {
+          throw new Error('Error al guardar el evento');
         }
-      ]);
-      setNewEvent({ title: '', date: '', type: 'other', description: '' });
-      setIsModalOpen(false);
+  
+        const savedEvent = await response.json();
+  
+        setEvents([
+          ...events,
+          {
+            id: savedEvent.id,
+            title: savedEvent.title,
+            date: savedEvent.date,
+            type: savedEvent.type,
+            description: savedEvent.description,
+          },
+        ]);
+  
+        setNewEvent({ title: '', date: '', type: 'other', description: '' });
+        setIsModalOpen(false);
+      } catch (error) {
+        console.error('Error al añadir el evento:', error);
+        alert('Hubo un error al guardar el evento.');
+      }
     }
   };
 

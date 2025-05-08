@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useTasks } from '@/app/hooks/useTasks';
-import TaskModal from '../components/modals/TaskModal';
+import TaskModal from '../../../components/modals/TaskModal';
 import { Task } from '@/app/api/tasks.api';
 
 export default function TasksPage() {

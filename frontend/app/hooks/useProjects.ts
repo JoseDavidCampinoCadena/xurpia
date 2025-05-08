@@ -34,8 +34,13 @@ export const useProjects = () => {
   };
 
   const createProject = async (data: { name: string; description?: string }) => {
+    if (!user) throw new Error('Usuario no autenticado');
+  
     try {
-      const newProject = await projectsApi.create(data);
+      const newProject = await projectsApi.create({
+        ...data,
+        ownerId: user.id,
+      });
       setProjects(prev => [...prev, newProject]);
       return newProject;
     } catch (err) {
@@ -44,6 +49,7 @@ export const useProjects = () => {
       throw err;
     }
   };
+  
 
   const updateProject = async (id: number, data: { name?: string; description?: string }) => {
     try {

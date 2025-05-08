@@ -9,9 +9,9 @@ export default function AdminSidebar() {
 
   const links = [
     { href: '/admin', icon: <FaHome className="w-5 h-5" />, text: 'Dashboard' },
-    { href: '/admin/collaborators', icon: <FaUsers className="w-5 h-5" />, text: 'Colaboradores' },
-    { href: '/admin/progress', icon: <FaChartLine className="w-5 h-5" />, text: 'Progreso' },
-    { href: '/admin/settings', icon: <FaCog className="w-5 h-5" />, text: 'Configuración' },
+    { href: '/admin/projects/${id}/collaborators', icon: <FaUsers className="w-5 h-5" />, text: 'Colaboradores' },
+    { href: '/admin/projects/${id}/progress', icon: <FaChartLine className="w-5 h-5" />, text: 'Progreso' },
+    { href: '/admin/projects/${id}/settings', icon: <FaCog className="w-5 h-5" />, text: 'Configuración' },
     // Separador visual
     { type: 'divider' },
     // Enlace de regreso al home

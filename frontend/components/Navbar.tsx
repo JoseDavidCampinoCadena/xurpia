@@ -1,7 +1,14 @@
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { FaTelegram, FaInstagram, FaXTwitter, FaDiscord } from "react-icons/fa6";
 
 export default function Navbar() {
+  const pathname = usePathname();
+
+  // Ocultar Navbar si estamos en /payment
+  if (pathname === "/payment") {
+    return null;
+  }
   return (
     <nav className="fixed top-0 w-full px-6 py-4 flex justify-between items-center bg-transparent text-white z-50">
       {/* Redes sociales (izquierda) */}
