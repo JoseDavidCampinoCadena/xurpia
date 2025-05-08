@@ -24,6 +24,7 @@ model User {
   projects       Project[]      @relation("ProjectOwner")
   collaborations Collaborator[] @relation("UserCollaborations")
   Conversation   Conversation[]
+  notes          Note[]         @relation("UserNotes") // Explicit relation name
 }
 
 model Project {
@@ -83,6 +84,19 @@ model Conversation {
   messages  Json // Guarda los mensajes en formato JSON
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
+}
+
+model Note {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String?
+  completed Boolean  @default(false) // Added completed field
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    Int
+  user      User     @relation("UserNotes", fields: [userId], references: [id]) // Explicit relation name and fields
+
+  @@index([userId])
 }
 
 enum TaskStatus {

@@ -2,45 +2,29 @@
 
 import { useState, useEffect, FormEvent } from 'react';
 import { useTheme } from '@/app/contexts/ThemeContext';
+// Import notesApi and related types
+import { notesApi, Note, CreateNotePayload, UpdateNotePayload } from '../../api/notes.api';
 
-// La interfaz de la Nota (puede que necesites ajustarla si tu API devuelve campos diferentes, ej: _id)
-interface Nota {
-  id: number; // O string, dependiendo de tu BD (ej. MongoDB usa string)
-  texto: string;
-  completado: boolean;
-  // Podrías añadir userId si las notas son por usuario
-  // userId?: string;
-}
-
-// Props del componente (initialNotes ya no es tan crucial si siempre cargamos desde la API)
-interface NotesClientProps {
-  // initialNotes?: Nota[]; // Podrías quitarlo o usarlo como fallback/SSR
-}
-
-const NotesClient = ({ /* initialNotes = [] */ }: NotesClientProps) => {
+// Remove initialNotes prop, component will fetch its own data
+const NotesClient = () => {
   const { theme } = useTheme();
-  const [notas, setNotas] = useState<Nota[]>([]);
+  const [notas, setNotas] = useState<Note[]>([]); // Use imported Note type, initialize as empty
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [editText, setEditText] = useState(''); // Renombrado para claridad (antes newText)
-  const [newNoteText, setNewNoteText] = useState('');
+  const [editTitle, setEditTitle] = useState(''); // Was editText, changed to align with 'title' field
+  const [newNoteTitle, setNewNoteTitle] = useState(''); // Was newNoteText, changed to align with 'title' field
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Cargar notas desde la API al montar el componente
   useEffect(() => {
     const fetchNotes = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/notes'); // Asegúrate que esta URL es correcta
-        if (!response.ok) {
-          throw new Error('Error al cargar las notas');
-        }
-        const data: Nota[] = await response.json();
+        const data = await notesApi.getNotes(); // Use notesApi
         setNotas(data);
         setError(null);
       } catch (err) {
-        console.error(err);
-        setError(err instanceof Error ? err.message : 'Un error desconocido ocurrió.');
+        console.error("Error fetching notes:", err);
+        setError(err instanceof Error ? err.message : 'Un error desconocido ocurrió al cargar las notas.');
       } finally {
         setLoading(false);
       }
@@ -61,144 +45,102 @@ const NotesClient = ({ /* initialNotes = [] */ }: NotesClientProps) => {
     } catch (err) {
       console.error(`Error en ${operationName}:`, err);
       setError(err instanceof Error ? err.message : `Falló la operación: ${operationName}`);
-      // Aquí podrías revertir el estado optimista si lo implementaste
     }
   };
 
   const agregarNota = async (e: FormEvent) => {
     e.preventDefault();
-    if (!newNoteText.trim()) return;
+    if (!newNoteTitle.trim()) return;
 
-    const nuevaNotaPayload = { texto: newNoteText.trim(), completado: false };
+    const nuevaNotaPayload: CreateNotePayload = { title: newNoteTitle.trim(), completed: false };
 
-    // Optimistic update (opcional, pero mejora la UX)
-    const tempId = Date.now(); // ID temporal para la UI
-    const optimisticNota: Nota = { ...nuevaNotaPayload, id: tempId };
+    const tempId = Date.now(); // Temporary ID for UI
+    // Create an optimistic note matching the full Note structure
+    const optimisticNota: Note = {
+      id: tempId,
+      title: newNoteTitle.trim(),
+      completed: false,
+      // Add placeholder/temporary values for other required fields
+      content: undefined, // Or provide if there's an input for it
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      userId: 0, // Placeholder, actual userId will be set by backend
+    };
     setNotas(prevNotas => [...prevNotas, optimisticNota]);
-    setNewNoteText('');
+    setNewNoteTitle('');
 
     await handleApiCall(
-      async () => {
-        const response = await fetch('/api/notes', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(nuevaNotaPayload),
-        });
-        if (!response.ok) throw new Error('Error al crear la nota');
-        return await response.json() as Nota;
-      },
+      async () => notesApi.createNote(nuevaNotaPayload), // Use notesApi
       (notaGuardada) => {
-        // Reemplaza la nota optimista con la real de la BD
         setNotas(prevNotas => prevNotas.map(n => n.id === tempId ? notaGuardada : n));
       },
       'agregar nota'
     );
-    // Si la llamada falla y no se actualiza con la notaGuardada,
-    // la nota optimista seguirá ahí. Considera removerla en el catch de handleApiCall
-    // o forzar una resincronización. Por simplicidad, aquí se deja.
   };
 
   const toggleCompletar = async (id: number) => {
     const notaOriginal = notas.find(n => n.id === id);
     if (!notaOriginal) return;
 
-    const nuevoEstadoCompletado = !notaOriginal.completado;
+    const nuevoEstadoCompletado = !notaOriginal.completed;
 
-    // Optimistic update
     setNotas(prevNotas =>
       prevNotas.map(nota =>
-        nota.id === id ? { ...nota, completado: nuevoEstadoCompletado } : nota
+        nota.id === id ? { ...nota, completed: nuevoEstadoCompletado } : nota
       )
     );
 
+    const payload: UpdateNotePayload = { completed: nuevoEstadoCompletado };
+
     await handleApiCall(
-      async () => {
-        const response = await fetch(`/api/notes/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ completado: nuevoEstadoCompletado }),
-        });
-        if (!response.ok) throw new Error('Error al actualizar estado de la nota');
-        return await response.json() as Nota;
-      },
+      async () => notesApi.updateNote(id, payload), // Use notesApi
       (notaActualizada) => {
         setNotas(prevNotas => prevNotas.map(n => n.id === id ? notaActualizada : n));
       },
-      'actualizar estado'
+      'actualizar estado de la nota'
     );
   };
 
   const borrarNota = async (id: number) => {
     if (!window.confirm('¿Estás seguro de que quieres eliminar esta nota?')) return;
 
-    const notasOriginales = [...notas];
-    // Optimistic update
     setNotas(prevNotas => prevNotas.filter(nota => nota.id !== id));
 
     await handleApiCall(
-      async () => {
-        const response = await fetch(`/api/notes/${id}`, {
-          method: 'DELETE',
-        });
-        if (!response.ok) throw new Error('Error al eliminar la nota');
-        // DELETE puede no devolver contenido o devolver un objeto de éxito
-        return id; // O un objeto de éxito si la API lo devuelve
-      },
-      () => {
-        // La nota ya fue removida optimísticamente
-      },
+      async () => notesApi.deleteNote(id), // Use notesApi
+      () => { /* Note already removed optimistically */ },
       'eliminar nota'
     );
-    // Si falla, podrías revertir:
-    // .catch(() => setNotas(notasOriginales));
   };
 
-  const iniciarEdicion = (id: number, textoActual: string) => {
+  const iniciarEdicion = (id: number, currentTitle: string) => {
     setEditingId(id);
-    setEditText(textoActual);
+    setEditTitle(currentTitle);
   };
 
   const cancelarEdicion = () => {
     setEditingId(null);
-    setEditText('');
+    setEditTitle('');
   }
 
   const guardarNotaEditada = async (id: number) => {
-    if (!editText.trim()) return;
+    if (!editTitle.trim()) return;
 
-    const notaOriginal = notas.find(n => n.id === id);
-    if (!notaOriginal) return;
-
-    const textoAnterior = notaOriginal.texto;
-    // Optimistic update
     setNotas(prevNotas =>
-      prevNotas.map(nota => (nota.id === id ? { ...nota, texto: editText } : nota))
+      prevNotas.map(nota => (nota.id === id ? { ...nota, title: editTitle.trim() } : nota))
     );
     setEditingId(null);
 
+    const payload: UpdateNotePayload = { title: editTitle.trim() };
+
     await handleApiCall(
-      async () => {
-        const response = await fetch(`/api/notes/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ texto: editText.trim() }),
-        });
-        if (!response.ok) throw new Error('Error al guardar la nota');
-        return await response.json() as Nota;
-      },
+      async () => notesApi.updateNote(id, payload), // Use notesApi
       (notaActualizada) => {
         setNotas(prevNotas => prevNotas.map(n => n.id === id ? notaActualizada : n));
-        setEditText(''); // Limpiar solo si es exitoso y se mantiene la edición
+        setEditTitle('');
       },
       'guardar edición de nota'
     );
-    // Si falla, podrías revertir:
-    // .catch(() => {
-    //   setNotas(prevNotas =>
-    //     prevNotas.map(nota => (nota.id === id ? { ...nota, texto: textoAnterior } : nota))
-    //   );
-    //   setEditingId(id); // Reabrir edición
-    // });
   };
 
   if (loading) {
@@ -221,9 +163,9 @@ const NotesClient = ({ /* initialNotes = [] */ }: NotesClientProps) => {
       <form onSubmit={agregarNota} className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 items-stretch">
         <input
           type="text"
-          placeholder="Nueva nota..."
-          value={newNoteText}
-          onChange={(e) => setNewNoteText(e.target.value)}
+          placeholder="Título de la nueva nota..."
+          value={newNoteTitle}
+          onChange={(e) => setNewNoteTitle(e.target.value)}
           className={`flex-grow p-3 rounded-md placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 ${
             theme === 'dark'
               ? 'bg-zinc-800 text-white border border-zinc-700'
@@ -250,8 +192,7 @@ const NotesClient = ({ /* initialNotes = [] */ }: NotesClientProps) => {
             key={nota.id}
             className={`rounded-lg p-4 shadow-lg flex flex-col justify-between space-y-4 transition-opacity duration-300 ${
               theme === 'dark' ? 'bg-zinc-800 border border-zinc-700' : 'bg-white border border-gray-200'
-            } ${nota.completado ? 'opacity-60' : ''}`}
-          >
+            } ${nota.completed ? 'opacity-60' : ''}`}>
             {editingId === nota.id ? (
               <div className='space-y-2'>
                 <textarea
@@ -260,8 +201,8 @@ const NotesClient = ({ /* initialNotes = [] */ }: NotesClientProps) => {
                       ? 'bg-zinc-700 text-white border-zinc-600'
                       : 'bg-gray-50 text-gray-900 border-gray-300'
                   }`}
-                  value={editText}
-                  onChange={(e) => setEditText(e.target.value)}
+                  value={editTitle} // Value is editTitle
+                  onChange={(e) => setEditTitle(e.target.value)}
                   autoFocus
                 />
                  <button
@@ -278,8 +219,9 @@ const NotesClient = ({ /* initialNotes = [] */ }: NotesClientProps) => {
                   </button>
               </div>
             ) : (
+              // Display nota.title. If nota.content is also relevant, you might want to display it too.
               <p className={`whitespace-pre-wrap flex-grow ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
-                {nota.texto}
+                {nota.title}
               </p>
             )}
 
@@ -288,21 +230,21 @@ const NotesClient = ({ /* initialNotes = [] */ }: NotesClientProps) => {
               <label className="flex items-center space-x-2 cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={nota.completado}
+                  checked={nota.completed} // Use nota.completed
                   onChange={() => toggleCompletar(nota.id)}
                   className={`form-checkbox h-5 w-5 rounded text-green-500 transition-colors duration-150 ease-in-out ${
                     theme === 'dark' ? 'bg-zinc-700 border-zinc-600 focus:ring-offset-zinc-800' : 'bg-gray-100 border-gray-300 focus:ring-offset-white'
                   } focus:ring-2 focus:ring-green-500`}
                 />
-                <span className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} ${nota.completado ? 'line-through' : ''}`}>
-                  {nota.completado ? 'Completada' : 'Pendiente'}
+                <span className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} ${nota.completed ? 'line-through' : ''}`}>
+                  {nota.completed ? 'Completada' : 'Pendiente'} {/* Use nota.completed */}
                 </span>
               </label>
 
               <div className="flex space-x-2">
-                {editingId !== nota.id && ( // Mostrar Editar solo si no se está editando esta nota
+                {editingId !== nota.id && (
                   <button
-                    onClick={() => iniciarEdicion(nota.id, nota.texto)}
+                    onClick={() => iniciarEdicion(nota.id, nota.title)} // Pass nota.title
                     className="bg-blue-500 text-white px-3 py-1.5 rounded-md hover:bg-blue-600 font-medium text-sm transition-colors duration-150 ease-in-out"
                   >
                     Editar
