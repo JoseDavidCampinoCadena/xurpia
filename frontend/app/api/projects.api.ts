@@ -20,4 +20,9 @@ export const projectsApi = {
   delete: async (id: number): Promise<void> => {
     await axios.delete(`/projects/${id}`);
   },
+};
+
+// Funciones helper para usar directamente
+export const getAllProjects = async (): Promise<Project[]> => {
+  return projectsApi.getAll();
 }; 

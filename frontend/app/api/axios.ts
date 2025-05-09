@@ -17,10 +17,16 @@ const createAxiosInstance = (): AxiosInstance => {
       const token = getCookie('token');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+        console.log('Token found and added to request headers');
+      } else {
+        console.warn('No token found in cookies for API request to:', config.url);
       }
       return config;
     },
-    (error: AxiosError) => Promise.reject(error)
+    (error: AxiosError) => {
+      console.error('Error in request interceptor:', error);
+      return Promise.reject(error);
+    }
   );
 
   instance.interceptors.response.use(

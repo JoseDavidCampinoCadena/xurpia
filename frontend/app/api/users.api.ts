@@ -16,4 +16,9 @@ export const usersApi = {
     const { data } = await axios.get('/users');
     return data;
   },
+};
+
+// Funciones helper para usar directamente
+export const getAllUsers = async (): Promise<User[]> => {
+  return usersApi.getAll();
 }; 
