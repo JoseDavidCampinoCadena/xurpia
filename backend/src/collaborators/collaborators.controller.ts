@@ -37,7 +37,36 @@ async addCollaborator(@Request() req, @Body() addCollaboratorDto: AddCollaborato
   return collaborator;
 }
 
-
+@Post('generate-invitation-code')
+async generateInvitationCode(@Request() req, @Body() body: { projectId: number }) {
+  // Solo el owner puede generar el código
+  const project = await this.collaboratorsService['prisma'].project.findUnique({
+    where: { id: body.projectId },
+  });
+  if (!project) {
+    throw new Error('Project not found');
+  }
+  if (project.ownerId !== req.user.userId) {
+    throw new Error('Solo el owner puede generar el código de invitación.');
+  }
+  // Si ya tiene invitationCode, lo retorna
+  if (project.invitationCode) {
+    return { code: project.invitationCode };
+  }
+  // Generar uno nuevo y guardarlo
+  let code: string;
+  let isUnique = false;
+  do {
+    code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const existing = await this.collaboratorsService['prisma'].project.findUnique({ where: { invitationCode: code } });
+    if (!existing) isUnique = true;
+  } while (!isUnique);
+  await this.collaboratorsService['prisma'].project.update({
+    where: { id: body.projectId },
+    data: { invitationCode: code },
+  });
+  return { code };
+}
 
   @Get('project/:projectId')
   findProjectCollaborators(@Request() req, @Param('projectId') projectId: string) {
@@ -52,5 +81,41 @@ async addCollaborator(@Request() req, @Body() addCollaboratorDto: AddCollaborato
   @Delete(':id')
   remove(@Request() req, @Param('id') id: string) {
     return this.collaboratorsService.removeCollaborator(req.user.userId, +id);
+  }
+
+  @Post('join-by-code')
+  async joinByInvitationCode(@Request() req, @Body() body: { code: string }) {
+    // Buscar el proyecto por invitationCode
+    const project = await this.collaboratorsService['prisma'].project.findUnique({
+      where: { invitationCode: body.code },
+    });
+    if (!project) {
+      throw new Error('Código de invitación inválido.');
+    }
+    // Validar límite de proyectos (1 propio, 2 como colaborador)
+    const userId = req.user.userId;
+    const ownedCount = await this.collaboratorsService['prisma'].project.count({ where: { ownerId: userId } });
+    const collabCount = await this.collaboratorsService['prisma'].collaborator.count({ where: { userId } });
+    if (ownedCount + collabCount >= 3) {
+      throw new Error('El plan gratuito permite participar en 3 proyectos.');
+    }
+    // Verificar si ya es colaborador
+    const already = await this.collaboratorsService['prisma'].collaborator.findFirst({ where: { projectId: project.id, userId } });
+    if (already) {
+      throw new Error('Ya eres colaborador de este proyecto.');
+    }
+    // Agregar como colaborador (rol MEMBER)
+    const collaborator = await this.collaboratorsService['prisma'].collaborator.create({
+      data: {
+        userId,
+        projectId: project.id,
+        role: 'MEMBER',
+      },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+        project: { select: { id: true, name: true } },
+      },
+    });
+    return collaborator;
   }
 }

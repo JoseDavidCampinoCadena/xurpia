@@ -8,6 +8,9 @@ export interface Project {
   id: number;
   name: string;
   description?: string;
+  logo: string;
+  location?: string;
+  lastConnection?: string;
   ownerId: number;
   createdAt: string;
   updatedAt: string;
@@ -33,7 +36,7 @@ export const useProjects = () => {
     }
   };
 
-  const createProject = async (data: { name: string; description?: string }) => {
+  const createProject = async (data: { name: string; description?: string; logo: string; location?: string; lastConnection?: string }) => {
     if (!user) throw new Error('Usuario no autenticado');
   
     try {
@@ -51,7 +54,7 @@ export const useProjects = () => {
   };
   
 
-  const updateProject = async (id: number, data: { name?: string; description?: string }) => {
+  const updateProject = async (id: number, data: { name?: string; description?: string; logo?: string; location?: string; lastConnection?: string }) => {
     try {
       const updatedProject = await projectsApi.update(id, data);
       setProjects(prev => prev.map(project => 
@@ -91,4 +94,4 @@ export const useProjects = () => {
     deleteProject,
     refreshProjects: fetchProjects,
   };
-}; 
+};

@@ -1,8 +1,22 @@
-import { IsString, IsOptional } from 'class-validator';
+import { IsString, IsOptional, IsNotEmpty, IsUrl, IsDateString } from 'class-validator';
 
 export class CreateProjectDto {
   @IsString()
+  @IsNotEmpty()
   name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsUrl()
+  logo: string; // URL obligatoria
+
+  @IsString()
+  @IsOptional()
+  location?: string;
+
+  @IsDateString()
+  @IsOptional()
+  lastConnection?: string;
 
   @IsString()
   @IsOptional()
@@ -16,5 +30,18 @@ export class UpdateProjectDto {
 
   @IsString()
   @IsOptional()
+  @IsUrl()
+  logo?: string;
+
+  @IsString()
+  @IsOptional()
+  location?: string;
+
+  @IsDateString()
+  @IsOptional()
+  lastConnection?: string;
+
+  @IsString()
+  @IsOptional()
   description?: string;
-} 
+}

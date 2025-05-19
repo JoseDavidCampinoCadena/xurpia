@@ -21,6 +21,8 @@ export default function ProjectsPage() {
   const { projects, loading, error, createProject } = useProjects();
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
+  const [newProjectLogo, setNewProjectLogo] = useState('');
+  const [newProjectLocation, setNewProjectLocation] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false); // Para feedback mientras se crea
 
   const router = useRouter(); // Inicializa el router
@@ -29,7 +31,7 @@ export default function ProjectsPage() {
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newProjectName.trim() || projects.length >= maxProjects || isSubmitting) return;
+    if (!newProjectName.trim() || !newProjectLogo.trim() || projects.length >= maxProjects || isSubmitting) return;
 
     setIsSubmitting(true); // Indicar que la operación está en curso
 
@@ -38,10 +40,15 @@ export default function ProjectsPage() {
       const newProject: Project = await createProject({
         name: newProjectName,
         description: newProjectDescription,
+        logo: newProjectLogo,
+        location: newProjectLocation,
+        lastConnection: new Date().toISOString(),
       });
 
       setNewProjectName('');
       setNewProjectDescription('');
+      setNewProjectLogo('');
+      setNewProjectLocation('');
 
       // Redirigir si newProject tiene un id
       if (newProject && newProject.id) {
@@ -82,6 +89,35 @@ export default function ProjectsPage() {
               placeholder="Nombre del proyecto"
               className="w-full p-2 border rounded dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
               required
+              disabled={projects.length >= maxProjects || isSubmitting}
+            />
+          </div>
+          <div>
+            <label htmlFor="projectLogo" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Logo del Proyecto (URL de imagen)
+            </label>
+            <input
+              id="projectLogo"
+              type="url"
+              value={newProjectLogo}
+              onChange={(e) => setNewProjectLogo(e.target.value)}
+              placeholder="https://ejemplo.com/logo.png"
+              className="w-full p-2 border rounded dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
+              required
+              disabled={projects.length >= maxProjects || isSubmitting}
+            />
+          </div>
+          <div>
+            <label htmlFor="projectLocation" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Ubicación (opcional)
+            </label>
+            <input
+              id="projectLocation"
+              type="text"
+              value={newProjectLocation}
+              onChange={(e) => setNewProjectLocation(e.target.value)}
+              placeholder="Ciudad, país, remoto, etc."
+              className="w-full p-2 border rounded dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
               disabled={projects.length >= maxProjects || isSubmitting}
             />
           </div>

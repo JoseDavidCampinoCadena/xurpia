@@ -31,6 +31,11 @@ export const collaboratorsApi = {
     return data;
   },
 
+  generateInvitationCode: async (projectId: number) => {
+    const { data } = await axios.post(`/collaborators/generate-invitation-code`, { projectId });
+    return data;
+  },
+
   addCollaborator: async (collaboratorData: AddCollaboratorData): Promise<Collaborator> => {
     const { data } = await axios.post('/collaborators', collaboratorData);
     return data;
@@ -44,4 +49,9 @@ export const collaboratorsApi = {
   removeCollaborator: async (collaboratorId: number): Promise<void> => {
     await axios.delete(`/collaborators/${collaboratorId}`);
   },
-}; 
+
+  joinByCode: async (code: string) => {
+    const { data } = await axios.post('/collaborators/join-by-code', { code });
+    return data;
+  },
+};

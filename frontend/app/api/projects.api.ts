@@ -7,12 +7,12 @@ export const projectsApi = {
     return data;
   },
 
-  create: async (projectData: { name: string; description?: string }): Promise<Project> => {
+  create: async (projectData: { name: string; description?: string; logo: string; location?: string; lastConnection?: string }): Promise<Project> => {
     const { data } = await axios.post('/projects', projectData);
     return data;
   },
 
-  update: async (id: number, projectData: { name?: string; description?: string }): Promise<Project> => {
+  update: async (id: number, projectData: { name?: string; description?: string; logo?: string; location?: string; lastConnection?: string }): Promise<Project> => {
     const { data } = await axios.patch(`/projects/${id}`, projectData);
     return data;
   },
@@ -20,4 +20,4 @@ export const projectsApi = {
   delete: async (id: number): Promise<void> => {
     await axios.delete(`/projects/${id}`);
   },
-}; 
+};

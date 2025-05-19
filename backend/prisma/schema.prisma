@@ -30,6 +30,10 @@ model User {
 model Project {
   id            Int            @id @default(autoincrement())
   name          String
+  logo          String         // URL obligatoria del logo
+  location      String?
+  lastConnection DateTime?
+  invitationCode String?   @unique // Código de invitación único para el proyecto
   events        Event[]
   description   String?
   ownerId       Int
@@ -46,7 +50,7 @@ model Task {
   description String?
   status      TaskStatus @default(PENDING)
   projectId   Int
-  project     Project    @relation("ProjectTasks", fields: [projectId], references: [id])
+  project     Project    @relation("ProjectTasks", fields: [projectId], references: [id], onDelete: Cascade)
   assigneeId  Int
   assignee    User       @relation("AssignedTasks", fields: [assigneeId], references: [id])
   createdAt   DateTime   @default(now())
@@ -58,7 +62,7 @@ model Collaborator {
   userId    Int
   user      User     @relation("UserCollaborations", fields: [userId], references: [id])
   projectId Int
-  project   Project  @relation("ProjectCollaborators", fields: [projectId], references: [id])
+  project   Project  @relation("ProjectCollaborators", fields: [projectId], references: [id], onDelete: Cascade)
   role      String   @default("MEMBER") // ADMIN, MEMBER
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { IoClose } from 'react-icons/io5';
-import { collaboratorsApi } from '@/app/api/collaborators.api';
-import { useProjects } from '@/app/hooks/useProjects';
+import { usersApi, User } from '@/app/api/users.api';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface CollaboratorModalProps {
@@ -29,7 +28,9 @@ export default function CollaboratorModal({
   const [formData, setFormData] = useState({ name: '', email: '', role: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { projects } = useProjects();
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [addUserLoading, setAddUserLoading] = useState<number | null>(null);
+  const [addUserError, setAddUserError] = useState<string | null>(null);
 
   useEffect(() => {
     if (collaborator && mode === 'edit') {
@@ -39,59 +40,93 @@ export default function CollaboratorModal({
     }
   }, [collaborator, mode]);
 
+  useEffect(() => {
+    if (mode === 'create' && isOpen) {
+      usersApi.getAll().then(setAllUsers).catch(() => setAllUsers([]));
+    }
+  }, [mode, isOpen]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-  
     try {
-      if (mode === 'create' && projects.length > 0) {
-        const newCollaborator = await collaboratorsApi.addCollaborator({
-          name: formData.name,
-          email: formData.email,
-          role: formData.role === 'admin' ? 'ADMIN' : 'MEMBER',
-          projectId: projects[0].id,
-          projectName: projects[0].name // 🔥 AGREGAR ESTE CAMPO
-        });
-        
-  
-        // Enviar invitación por email con el proyecto y el rol
-        await fetch('/api/send-invite', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: formData.email,
-            name: formData.name,
-            projectName: projects[0].name, // ✅ Enviar el nombre del proyecto
-            role: formData.role === 'admin' ? 'ADMIN' : 'MEMBER' // ✅ Enviar el rol
-          })
-        });
-  
-        onSave({ 
-          name: newCollaborator.user.name, 
-          email: newCollaborator.user.email, 
-          role: newCollaborator.role 
-        });
-      } else if (mode === 'edit' && collaborator) {
-        const updatedCollaborator = await collaboratorsApi.updateRole(collaborator.id, { 
-          role: formData.role === 'admin' ? 'ADMIN' : 'MEMBER' 
-        });
-  
-        onSave({ 
-          name: updatedCollaborator.user.name, 
-          email: updatedCollaborator.user.email, 
-          role: updatedCollaborator.role 
-        });
-      }
+      await onSave({
+        name: formData.name,
+        email: formData.email,
+        role: formData.role === 'admin' ? 'ADMIN' : 'MEMBER',
+      });
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al procesar la solicitud');
+      setError('Error al procesar la solicitud');
     } finally {
       setLoading(false);
     }
   };
-  
 
+  const handleAddUser = async (user: User, role: string) => {
+    setAddUserLoading(user.id);
+    setAddUserError(null);
+    try {
+      await onSave({ name: user.name, email: user.email, role });
+      onClose();
+    } catch (err: any) {
+      setAddUserError('No se pudo agregar el usuario.');
+    } finally {
+      setAddUserLoading(null);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  // Mostrar listado de usuarios registrados en modo 'create'
+  if (mode === 'create' && allUsers.length > 0) {
+    return (
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div className="bg-zinc-900 text-white rounded-lg shadow-lg p-6 w-full max-w-md max-h-[80vh] overflow-y-auto" initial={{ scale: 0.8 }} animate={{ scale: 1 }} exit={{ scale: 0.8 }}>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Selecciona un usuario para agregar</h2>
+                <button onClick={onClose} className="text-gray-400 hover:text-white">
+                  <IoClose size={24} />
+                </button>
+              </div>
+              {addUserError && <div className="text-red-500 text-sm mb-2">{addUserError}</div>}
+              <div className="space-y-2">
+                {allUsers.map((user) => (
+                  <div key={user.id} className="flex items-center justify-between bg-zinc-800 rounded p-2 mb-1">
+                    <div>
+                      <div className="font-semibold">{user.name}</div>
+                      <div className="text-xs text-gray-400">{user.email}</div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        className="px-3 py-1 bg-blue-500 rounded text-xs hover:bg-blue-600 disabled:opacity-50"
+                        disabled={addUserLoading === user.id}
+                        onClick={() => handleAddUser(user, 'MEMBER')}
+                      >
+                        {addUserLoading === user.id ? 'Agregando...' : 'Agregar como Miembro'}
+                      </button>
+                      <button
+                        className="px-3 py-1 bg-red-500 rounded text-xs hover:bg-red-600 disabled:opacity-50"
+                        disabled={addUserLoading === user.id}
+                        onClick={() => handleAddUser(user, 'ADMIN')}
+                      >
+                        {addUserLoading === user.id ? 'Agregando...' : 'Agregar como Admin'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
+  }
+
+  // Formulario manual para editar
   return (
     <AnimatePresence>
       {isOpen && (

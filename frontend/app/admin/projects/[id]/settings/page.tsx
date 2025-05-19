@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FaCog, FaBell } from 'react-icons/fa';
 import { useTheme } from '@/app/contexts/ThemeContext';
 import { useProjects } from '@/app/hooks/useProjects';
 import { useParams, useRouter } from 'next/navigation';
 
 interface ProjectSettings {
+  name: string;
+  logo: string;
+  location: string;
   description: string;
   emailNotifications: boolean;
   pushNotifications: boolean;
@@ -22,12 +25,28 @@ export default function SettingsPage() {
 
   const [settings, setSettings] = useState<ProjectSettings>(() => {
     return {
-      description: currentProject?.description || 'Descripción del proyecto...',
+      name: currentProject?.name || '',
+      logo: currentProject?.logo || '',
+      location: currentProject?.location || '',
+      description: currentProject?.description || '',
       emailNotifications: true,
       pushNotifications: true,
       language: 'es',
     };
   });
+
+  // Sincroniza settings cuando currentProject cambie
+  useEffect(() => {
+    if (currentProject) {
+      setSettings((prev) => ({
+        ...prev,
+        name: currentProject.name || '',
+        logo: currentProject.logo || '',
+        location: currentProject.location || '',
+        description: currentProject.description || '',
+      }));
+    }
+  }, [currentProject]);
 
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -43,16 +62,15 @@ export default function SettingsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-
     try {
-      // Actualiza el proyecto en el backend
       if (currentProject) {
         await updateProject(currentProject.id, {
+          name: settings.name,
+          logo: settings.logo,
+          location: settings.location,
           description: settings.description,
         });
       }
-
-      // Mostrar mensaje de éxito
       setShowSavedMessage(true);
       setTimeout(() => setShowSavedMessage(false), 3000);
     } catch (error) {
@@ -65,6 +83,9 @@ export default function SettingsPage() {
   const handleResetSettings = () => {
     if (confirm('¿Estás seguro de que quieres restablecer todas las configuraciones?')) {
       const defaultSettings: ProjectSettings = {
+        name: '',
+        logo: '',
+        location: '',
         description: 'Descripción del proyecto...',
         emailNotifications: true,
         pushNotifications: true,
@@ -119,7 +140,6 @@ export default function SettingsPage() {
               General
             </h2>
           </div>
-
           <div className="space-y-4">
             <div>
               <label className={`block mb-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -127,13 +147,55 @@ export default function SettingsPage() {
               </label>
               <input
                 type="text"
-                value={currentProject?.name || ''}
-                disabled
+                value={settings.name}
+                onChange={(e) => handleChange('name', e.target.value)}
                 className={`w-full px-4 py-2 rounded-md ${
                   theme === 'dark'
                     ? 'bg-zinc-900 text-white'
                     : 'bg-gray-100 text-gray-900 border border-gray-200'
                 }`}
+                required
+              />
+            </div>
+
+            <div>
+              <label className={`block mb-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                Logo del Proyecto (URL de imagen)
+              </label>
+              <input
+                type="url"
+                value={settings.logo}
+                onChange={(e) => handleChange('logo', e.target.value)}
+                className={`w-full px-4 py-2 rounded-md ${
+                  theme === 'dark'
+                    ? 'bg-zinc-900 text-white'
+                    : 'bg-gray-100 text-gray-900 border border-gray-200'
+                }`}
+                required
+              />
+              {settings.logo && (
+                <img
+                  src={settings.logo}
+                  alt="Logo del proyecto"
+                  className="w-16 h-16 rounded-full mt-2 border"
+                />
+              )}
+            </div>
+
+            <div>
+              <label className={`block mb-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                Ubicación
+              </label>
+              <input
+                type="text"
+                value={settings.location}
+                onChange={(e) => handleChange('location', e.target.value)}
+                className={`w-full px-4 py-2 rounded-md ${
+                  theme === 'dark'
+                    ? 'bg-zinc-900 text-white'
+                    : 'bg-gray-100 text-gray-900 border border-gray-200'
+                }`}
+                placeholder="Ciudad, país, remoto, etc."
               />
             </div>
 

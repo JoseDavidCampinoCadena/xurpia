@@ -1,19 +1,34 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto, UpdateProjectDto } from './dto/project.dto';
+import { randomBytes } from 'crypto';
 
 @Injectable()
 export class ProjectsService {
   constructor(private prisma: PrismaService) {}
 
   async create(userId: number, dto: CreateProjectDto) {
+    // Generar invitationCode único
+    let invitationCode: string;
+    let isUnique = false;
+    do {
+      invitationCode = randomBytes(6).toString('hex');
+      const existing = await this.prisma.project.findUnique({ where: { invitationCode } });
+      if (!existing) isUnique = true;
+    } while (!isUnique);
+
     const project = await this.prisma.project.create({
       data: {
-        ...dto,
-        ownerId: userId,
+        name: dto.name,
+        logo: dto.logo,
+        location: dto.location,
+        lastConnection: dto.lastConnection ? new Date(dto.lastConnection) : new Date(),
+        description: dto.description,
+        invitationCode,
+        owner: { connect: { id: userId } },
         collaborators: {
           create: {
-            userId,
+            user: { connect: { id: userId } },
             role: 'ADMIN',
           },
         },
@@ -141,7 +156,10 @@ export class ProjectsService {
 
     return this.prisma.project.update({
       where: { id },
-      data: dto,
+      data: {
+        ...dto,
+        lastConnection: dto.lastConnection ? new Date(dto.lastConnection) : undefined,
+      },
       include: {
         owner: {
           select: {
@@ -172,10 +190,12 @@ export class ProjectsService {
       throw new ForbiddenException('Only the project owner can delete it');
     }
 
+    // Eliminar todas las tareas asociadas al proyecto antes de eliminar el proyecto
+    await this.prisma.task.deleteMany({ where: { projectId: id } });
     await this.prisma.project.delete({
       where: { id },
     });
 
     return { message: 'Project deleted successfully' };
   }
-} 
+}
