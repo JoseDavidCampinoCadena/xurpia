@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FaTasks, FaUsers, FaCalendarAlt, FaChartLine, FaCog, FaHome } from 'react-icons/fa';
+import { FaTasks, FaUsers, FaCalendarAlt, FaChartLine, FaCog, FaHome, FaComment } from 'react-icons/fa';
 import { useTheme } from '@/app/contexts/ThemeContext';
 import { useEffect, useState } from 'react';
 import { projectsApi } from '@/app/api/projects.api'; // Asegúrate de que la ruta sea correcta
@@ -53,6 +53,11 @@ export default function AdminSidebar() {
       path: `/admin/projects/${currentProjectId}/collaborators`,
       name: 'Colaboradores',
       icon: <FaUsers className={`w-5 h-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
+    },
+    {
+      path: `/admin/projects/${currentProjectId}/chats`,
+      name: 'Chats',
+      icon: <FaComment className={`w-5 h-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
     },
     {
       path: `/admin/projects/${currentProjectId}/calendar`,

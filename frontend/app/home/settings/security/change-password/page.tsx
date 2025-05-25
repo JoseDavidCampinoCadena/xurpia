@@ -3,16 +3,19 @@ import React, { useState } from 'react';
 import MiniSidebar from '../../components/MiniSidebar';
 import { useRouter } from 'next/navigation';
 import { IoChevronBackOutline } from 'react-icons/io5';
+import { usersApi } from '@/app/api/users.api';
+import { useAuth } from '@/app/hooks/useAuth';
 
 const ChangePassword = () => {
   const router = useRouter();
+  const { user } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     setSuccess('');
@@ -21,9 +24,24 @@ const ChangePassword = () => {
       setError('Las contraseñas no coinciden.');
       return;
     }
-
-    // Simular cambio de contraseña
-    setSuccess('Contraseña cambiada con éxito.');
+    if (!user) {
+      setError('No hay usuario autenticado.');
+      return;
+    }
+    try {
+      await usersApi.changePassword(user.id, {
+        currentPassword,
+        newPassword,
+        confirmPassword,
+      });
+      setSuccess('Contraseña cambiada con éxito.');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      // @ts-expect-error: err type is unknown, but we want to access response.data.message for error feedback
+      setError(err?.response?.data?.message || 'Error al cambiar la contraseña.');
+    }
   };
 
   return (

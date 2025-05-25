@@ -18,6 +18,9 @@ model User {
   email          String         @unique
   password       String
   name           String
+  description    String?        // Nueva descripción opcional del usuario
+  profileImage   String?
+  cvUrl          String?
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   tasks          Task[]         @relation("AssignedTasks")
@@ -25,6 +28,10 @@ model User {
   collaborations Collaborator[] @relation("UserCollaborations")
   Conversation   Conversation[]
   notes          Note[]         @relation("UserNotes") // Explicit relation name
+  gender         String?
+  interest       String? // Área de interés del usuario
+  sentMessages   Message[] @relation("MessageFromUser")
+  receivedMessages Message[] @relation("MessageToUser")
 }
 
 model Project {
@@ -101,6 +108,16 @@ model Note {
   user      User     @relation("UserNotes", fields: [userId], references: [id]) // Explicit relation name and fields
 
   @@index([userId])
+}
+
+model Message {
+  id          Int      @id @default(autoincrement())
+  fromUserId  Int
+  toUserId    Int
+  content     String
+  createdAt   DateTime @default(now())
+  fromUser    User     @relation("MessageFromUser", fields: [fromUserId], references: [id])
+  toUser      User     @relation("MessageToUser", fields: [toUserId], references: [id])
 }
 
 enum TaskStatus {

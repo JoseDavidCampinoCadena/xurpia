@@ -12,4 +12,24 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   password?: string;
-} 
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  profileImage?: string;
+
+  @IsOptional()
+  @IsString()
+  cvUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  gender?: string;
+
+  @IsOptional()
+  @IsString()
+  interest?: string;
+}

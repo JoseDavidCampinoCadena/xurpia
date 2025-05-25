@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FaHome, FaUsers, FaChartLine, FaCog, FaArrowLeft } from 'react-icons/fa';
+import { FaHome, FaUsers, FaChartLine, FaCog, FaArrowLeft, FaComment } from 'react-icons/fa';
 
 export default function AdminSidebar() {
   const pathname = usePathname();
@@ -10,6 +10,7 @@ export default function AdminSidebar() {
   const links = [
     { href: '/admin', icon: <FaHome className="w-5 h-5" />, text: 'Dashboard' },
     { href: '/admin/projects/${id}/collaborators', icon: <FaUsers className="w-5 h-5" />, text: 'Colaboradores' },
+    { href: '/admin/projects/${id}/chats', icon: <FaComment className="w-5 h-5" />, text: 'Chats' },
     { href: '/admin/projects/${id}/progress', icon: <FaChartLine className="w-5 h-5" />, text: 'Progreso' },
     { href: '/admin/projects/${id}/settings', icon: <FaCog className="w-5 h-5" />, text: 'Configuración' },
     // Separador visual

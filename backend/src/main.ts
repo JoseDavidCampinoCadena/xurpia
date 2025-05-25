@@ -3,6 +3,8 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { PrismaService } from './prisma/prisma.service';
 import { Prisma } from '@prisma/client';
+import { join } from 'path';
+import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -37,6 +39,9 @@ async function bootstrap() {
 
   console.log('✅ Database connection established');
 
+  // Servir archivos estáticos de /uploads
+  app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
+
   const port = process.env.PORT || 3001;
   await app.listen(port);
   console.log(`
@@ -48,4 +53,4 @@ async function bootstrap() {
    POST http://localhost:${port}/login
   `);
 }
-bootstrap(); 
+bootstrap();

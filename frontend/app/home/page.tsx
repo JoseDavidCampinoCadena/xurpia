@@ -87,13 +87,19 @@ export default function Home() {
           <div className="header mb-4">
             <div className="flex justify-between items-center mb-2">
               <div>
-                <h4 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                <h4 className={`text-2xl font-bold mb-5 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                   Aquí están tus proyectos
                 </h4>
                 <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
-                  Aquí estarán tus grupos de trabajo
+                  Maximiza todo tu potencial y lleva tus proyectos al siguiente nivel
                 </p>
               </div>
+              <button
+                className="ml-4 bg-green-600 text-white px-6 py-2 mt-12 rounded-xl font-bold hover:bg-green-700 transition"
+                onClick={() => router.push('/home/addproject')}
+              >
+                Crear Proyecto
+              </button>
             </div>
           </div>
           <div className="space-y-6 mt-12">
@@ -137,26 +143,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="bg-gray-100 dark:bg-zinc-800 p-4 rounded-md mb-6">
-          <p className="text-zinc-800 dark:text-white font-medium">¿Tienes un código de proyecto?</p>
-          <div className="flex items-center gap-2 mt-2">
-            <input
-              type="text"
-              placeholder="Ingresa el código"
-              className="px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white w-full"
-              value={joinCode}
-              onChange={(e) => setJoinCode(e.target.value)}
-            />
-            <button
-              onClick={handleJoinWithCode}
-              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-            >
-              Unirse
-            </button>
-          </div>
-          {joinError && <p className="text-red-500 text-sm mt-2">{joinError}</p>}
-          {joinSuccess && <p className="text-green-500 text-sm mt-2">{joinSuccess}</p>}
-        </div>
+        
       </div>
     </div>
   );

@@ -8,6 +8,10 @@ interface User {
   id: number;
   name: string;
   email: string;
+  description?: string;
+  profileImage?: string;
+  cvUrl?: string;
+  gender?: string;
 }
 
 export const useAuth = () => {
@@ -50,5 +54,6 @@ export const useAuth = () => {
     login,
     logout,
     isAuthenticated: !!user,
+    setUser,
   };
-}; 
+};

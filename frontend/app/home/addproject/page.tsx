@@ -51,7 +51,8 @@ export default function ProjectsPage() {
       setNewProjectLocation('');
 
       // Redirigir si newProject tiene un id
-      if (newProject && newProject.id) {
+      if (newProject && (typeof newProject.id === 'number' || typeof newProject.id === 'string')) {
+        // Asegura que el id sea string para la ruta
         router.push(`/admin/projects/${newProject.id}`);
       } else {
         // Opcional: manejar el caso en que no se obtuvo el ID (puede ser un error o refrescar la lista actual)

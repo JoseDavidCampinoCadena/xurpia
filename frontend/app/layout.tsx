@@ -4,7 +4,6 @@ import './globals.css';
 import Navbar from '@/components/Navbar';
 import { usePathname } from 'next/navigation';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { SessionProvider } from "next-auth/react";
 
 function MainContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -37,11 +36,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="color-scheme" content="dark" />
       </head>
       <body suppressHydrationWarning>
-        <SessionProvider>
-          <ThemeProvider>
-            <MainContent>{children}</MainContent>
-          </ThemeProvider>
-        </SessionProvider>
+        <ThemeProvider>
+          <MainContent>{children}</MainContent>
+        </ThemeProvider>
       </body>
     </html>
   );
