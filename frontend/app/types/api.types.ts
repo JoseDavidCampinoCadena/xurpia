@@ -3,6 +3,15 @@ export interface User {
   id: number;
   name: string;
   email: string;
+  description?: string;
+  profileImage?: string;
+  cvUrl?: string;
+  gender?: string;
+  profession?: string; // Asegura que profession está presente
+  nationality?: string;
+  age?: number;
+  languages?: string[];
+  projectsCount?: number; // Nuevo campo para el conteo de proyectos
 }
 
 // Tipos de proyecto
@@ -66,4 +75,4 @@ export enum CollaboratorRole {
 export interface ApiResponse<T> {
   data: T;
   message?: string;
-} 
+}

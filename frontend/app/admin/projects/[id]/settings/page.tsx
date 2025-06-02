@@ -5,6 +5,7 @@ import { FaCog, FaBell } from 'react-icons/fa';
 import { useTheme } from '@/app/contexts/ThemeContext';
 import { useProjects } from '@/app/hooks/useProjects';
 import { useParams, useRouter } from 'next/navigation';
+import { useAuth } from '@/app/hooks/useAuth';
 
 interface ProjectSettings {
   name: string;
@@ -21,7 +22,9 @@ export default function SettingsPage() {
   const { projects, updateProject, deleteProject } = useProjects(); // Asegúrate de que `deleteProject` esté disponible
   const { id } = useParams(); // Obtén el ID del proyecto desde la URL
   const router = useRouter(); // Para redirigir después de eliminar
+  const { user } = useAuth();
   const currentProject = projects.find((project) => project.id.toString() === id); // Encuentra el proyecto actual
+  const isOwner = currentProject && user && currentProject.ownerId === user.id;
 
   const [settings, setSettings] = useState<ProjectSettings>(() => {
     return {
@@ -51,6 +54,9 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showSavedMessage, setShowSavedMessage] = useState(false);
+
+  // Deshabilitar acciones si no es el owner
+  const isReadOnly = !isOwner;
 
   const handleChange = (field: keyof ProjectSettings, value: string | boolean) => {
     setSettings((prev) => ({
@@ -155,6 +161,7 @@ export default function SettingsPage() {
                     : 'bg-gray-100 text-gray-900 border border-gray-200'
                 }`}
                 required
+                disabled={isReadOnly}
               />
             </div>
 
@@ -172,6 +179,7 @@ export default function SettingsPage() {
                     : 'bg-gray-100 text-gray-900 border border-gray-200'
                 }`}
                 required
+                disabled={isReadOnly}
               />
               {settings.logo && (
                 <img
@@ -196,6 +204,7 @@ export default function SettingsPage() {
                     : 'bg-gray-100 text-gray-900 border border-gray-200'
                 }`}
                 placeholder="Ciudad, país, remoto, etc."
+                disabled={isReadOnly}
               />
             </div>
 
@@ -212,6 +221,7 @@ export default function SettingsPage() {
                     : 'bg-white text-gray-900 border border-gray-200'
                 }`}
                 rows={4}
+                disabled={isReadOnly}
               />
             </div>
           </div>
@@ -237,6 +247,7 @@ export default function SettingsPage() {
                   checked={settings.emailNotifications}
                   onChange={(e) => handleChange('emailNotifications', e.target.checked)}
                   className="sr-only peer"
+                  disabled={isReadOnly}
                 />
                 <div
                   className={`w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all ${
@@ -258,6 +269,7 @@ export default function SettingsPage() {
                   checked={settings.pushNotifications}
                   onChange={(e) => handleChange('pushNotifications', e.target.checked)}
                   className="sr-only peer"
+                  disabled={isReadOnly}
                 />
                 <div
                   className={`w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all ${
@@ -272,11 +284,15 @@ export default function SettingsPage() {
         </div>
       </form>
 
-      <div className="flex justify-end mt-6">
-        <button
+      
+        
+        {isOwner && (
+          <div className="flex justify-end mt-6">
+          <button
           type="button"
           onClick={handleResetSettings}
           className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 mr-2"
+          disabled={isReadOnly}
         >
           Restablecer
         </button>
@@ -284,19 +300,20 @@ export default function SettingsPage() {
           type="submit"
           onClick={handleSubmit}
           className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-          disabled={isSaving}
+          disabled={isSaving || isReadOnly}
         >
           {isSaving ? 'Guardando...' : 'Guardar Cambios'}
         </button>
-        <button
-          type="button"
-          onClick={handleDeleteProject}
-          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 ml-2"
-          disabled={isDeleting}
-        >
-          {isDeleting ? 'Eliminando...' : 'Eliminar Proyecto'}
-        </button>
+          <button
+            type="button"
+            onClick={handleDeleteProject}
+            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 ml-2"
+            disabled={isDeleting}
+          >
+            {isDeleting ? 'Eliminando...' : 'Eliminar Proyecto'}
+          </button>
+          </div>
+        )}
       </div>
-    </div>
   );
 }

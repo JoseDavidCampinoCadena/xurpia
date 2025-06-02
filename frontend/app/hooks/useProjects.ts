@@ -14,6 +14,8 @@ export interface Project {
   ownerId: number;
   createdAt: string;
   updatedAt: string;
+  collaborators?: any[];
+  tasks?: any[];
 }
 
 export const useProjects = () => {
@@ -38,13 +40,15 @@ export const useProjects = () => {
 
   const createProject = async (data: { name: string; description?: string; logo: string; location?: string; lastConnection?: string }) => {
     if (!user) throw new Error('Usuario no autenticado');
-  
     try {
       const newProject = await projectsApi.create({
         ...data,
         ownerId: user.id,
       });
       setProjects(prev => [...prev, newProject]);
+      // Lógica para aumentar el conteo de proyectos del usuario al crear uno
+      // Si tienes un campo projectsCount en el usuario, aquí podrías actualizarlo
+      // await usersApi.updateUserProfile(user.id, { projectsCount: (user.projectsCount || 0) + 1 });
       return newProject;
     } catch (err) {
       setError('Error al crear el proyecto');
@@ -52,7 +56,21 @@ export const useProjects = () => {
       throw err;
     }
   };
-  
+
+  // Lógica para aumentar el conteo de proyectos cuando el usuario se une a un proyecto
+  const joinProject = async (projectId: number) => {
+    if (!user) throw new Error('Usuario no autenticado');
+    try {
+      await projectsApi.join(projectId, user.id);
+      // Aquí podrías actualizar el conteo de proyectos del usuario
+      // await usersApi.updateUserProfile(user.id, { projectsCount: (user.projectsCount || 0) + 1 });
+      await fetchProjects();
+    } catch (err) {
+      setError('Error al unirse al proyecto');
+      console.error('Error joining project:', err);
+      throw err;
+    }
+  };
 
   const updateProject = async (id: number, data: { name?: string; description?: string; logo?: string; location?: string; lastConnection?: string }) => {
     try {
@@ -93,5 +111,6 @@ export const useProjects = () => {
     updateProject,
     deleteProject,
     refreshProjects: fetchProjects,
+    joinProject, // Exporta la función para usarla donde se necesite
   };
 };

@@ -5,6 +5,7 @@ interface AddCollaboratorData {
   email: string;
   role: 'ADMIN' | 'MEMBER';
   projectId: number;
+  projectName: string; // <-- necesario para el backend
 }
 
 interface UpdateRoleData {

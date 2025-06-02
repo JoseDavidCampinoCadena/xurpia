@@ -20,17 +20,17 @@ export class ProjectsController {
 
   @Post()
   create(@Request() req, @Body() createProjectDto: CreateProjectDto) {
-    return this.projectsService.create(req.user.id, createProjectDto);
+    return this.projectsService.create(req.user.userId, createProjectDto);
   }
 
   @Get()
   findAll(@Request() req) {
-    return this.projectsService.findAll(req.user.id);
+    return this.projectsService.findAll(req.user.userId);
   }
 
   @Get(':id')
   findOne(@Request() req, @Param('id') id: string) {
-    return this.projectsService.findOne(req.user.id, +id);
+    return this.projectsService.findOne(req.user.userId, +id);
   }
 
   @Patch(':id')
@@ -39,11 +39,16 @@ export class ProjectsController {
     @Param('id') id: string,
     @Body() updateProjectDto: UpdateProjectDto,
   ) {
-    return this.projectsService.update(req.user.id, +id, updateProjectDto);
+    return this.projectsService.update(req.user.userId, +id, updateProjectDto);
   }
 
   @Delete(':id')
   remove(@Request() req, @Param('id') id: string) {
-    return this.projectsService.remove(req.user.id, +id);
+    return this.projectsService.remove(req.user.userId, +id);
+  }
+
+  @Post(':id/join')
+  async joinProject(@Request() req, @Param('id') id: string) {
+    return this.projectsService.joinProject(req.user.userId, +id);
   }
 }

@@ -8,7 +8,10 @@ export interface User {
   profileImage?: string;
   cvUrl?: string;
   gender?: string;
-  interest?: string;
+  profession?: string;
+  nationality?: string;
+  age?: number;
+  languages?: string[];
 }
 
 export interface UpdateUserPayload {
@@ -41,6 +44,14 @@ export const usersApi = {
   },
   changePassword: async (id: number, payload: { currentPassword: string; newPassword: string; confirmPassword: string }): Promise<{ message: string }> => {
     const { data } = await axios.patch(`/users/${id}/password`, payload);
+    return data;
+  },
+  getUniqueUserFields: async () => {
+    const { data } = await axios.get('/users/unique-fields');
+    return data;
+  },
+  getById: async (id: number): Promise<User> => {
+    const { data } = await axios.get(`/users/${id}`);
     return data;
   },
 };

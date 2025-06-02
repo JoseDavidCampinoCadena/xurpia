@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import { Task, CreateTaskData, UpdateTaskData } from '@/app/api/tasks.api';
 
 interface TaskModalProps {
@@ -12,6 +13,9 @@ interface TaskModalProps {
 }
 
 export default function TaskModal({ isOpen, onClose, mode, task, onSubmit }: TaskModalProps) {
+  const params = useParams();
+  const projectIdFromUrl = params?.id ? Number(params.id) : undefined;
+
   const [formData, setFormData] = useState<CreateTaskData | UpdateTaskData>({
     title: '',
     description: '',
@@ -25,7 +29,7 @@ export default function TaskModal({ isOpen, onClose, mode, task, onSubmit }: Tas
       setFormData({
         title: task.title,
         description: task.description || '',
-        projectId: task.projectId,
+        projectId: task.projectId ?? projectIdFromUrl ?? 1,
         assigneeId: task.assigneeId,
         status: task.status
       });
@@ -33,12 +37,12 @@ export default function TaskModal({ isOpen, onClose, mode, task, onSubmit }: Tas
       setFormData({
         title: '',
         description: '',
-        projectId: 1,
+        projectId: projectIdFromUrl || 1,
         assigneeId: 1,
         status: 'PENDING'
       });
     }
-  }, [task, mode]);
+  }, [task, mode, projectIdFromUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,7 +90,7 @@ export default function TaskModal({ isOpen, onClose, mode, task, onSubmit }: Tas
             </label>
             <select
               value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value as 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' })}
               className="w-full p-2 border rounded-md bg-white dark:bg-zinc-900 text-gray-900 dark:text-white"
             >
               <option value="PENDING">Pendiente</option>
@@ -114,4 +118,4 @@ export default function TaskModal({ isOpen, onClose, mode, task, onSubmit }: Tas
       </div>
     </div>
   );
-} 
+}

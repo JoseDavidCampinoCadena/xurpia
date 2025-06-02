@@ -11,20 +11,20 @@ export class NotesController {
 
   @Post()
   create(@Body() createNoteDto: CreateNoteDto, @Request() req) {
-    // Assuming req.user.id contains the authenticated user's ID
-    const userId = req.user.id;
+    // Usa userId, no id
+    const userId = req.user.userId;
     return this.notesService.create(createNoteDto, userId);
   }
 
   @Get()
   findAll(@Request() req) {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     return this.notesService.findAll(userId);
   }
 
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number, @Request() req) {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     return this.notesService.findOne(id, userId);
   }
 
@@ -34,13 +34,13 @@ export class NotesController {
     @Body() updateNoteDto: UpdateNoteDto,
     @Request() req,
   ) {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     return this.notesService.update(id, updateNoteDto, userId);
   }
 
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     return this.notesService.remove(id, userId);
   }
 }

@@ -185,7 +185,7 @@ export class ProjectsService {
 
   async remove(userId: number, id: number) {
     const project = await this.findOne(userId, id);
-
+    console.log('REMOVE PROJECT DEBUG:', { userId, ownerId: project.ownerId, project });
     if (project.ownerId !== userId) {
       throw new ForbiddenException('Only the project owner can delete it');
     }
@@ -197,5 +197,23 @@ export class ProjectsService {
     });
 
     return { message: 'Project deleted successfully' };
+  }
+
+  async joinProject(userId: number, projectId: number) {
+    // Check if user is already a collaborator
+    const existing = await this.prisma.collaborator.findFirst({
+      where: { userId, projectId },
+    });
+    if (!existing) {
+      await this.prisma.collaborator.create({
+        data: { userId, projectId, role: 'MEMBER' },
+      });
+      // Increment projectsCount
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { projectsCount: { increment: 1 } },
+      });
+    }
+    return { message: 'Joined project successfully' };
   }
 }

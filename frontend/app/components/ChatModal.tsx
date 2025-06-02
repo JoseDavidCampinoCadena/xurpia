@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { messagesApi } from '@/app/api/messages.api';
+import messagesApi from '@/app/api/messagesApi';
 import { User } from '@/app/api/users.api';
 
 interface ChatModalProps {

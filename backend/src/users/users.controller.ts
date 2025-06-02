@@ -85,7 +85,9 @@ export class UsersController {
       email: body.email,
       description: body.description,
       gender: body.gender,
-      interest: body.interest,
+      profession: body.profession, // <-- Asegúrate de incluir profession aquí
+      nationality: body.nationality,
+      languages: body.languages ? (Array.isArray(body.languages) ? body.languages : JSON.parse(body.languages)) : undefined,
     };
     if (files && files.length) {
       for (const file of files) {
@@ -143,5 +145,10 @@ export class UsersController {
       ids = (text.match(/\d+/g) || []).map(Number);
     }
     return { recommendedUserIds: ids };
+  }
+
+  @Get('unique-fields')
+  async getUniqueFields() {
+    return this.usersService.getUniqueFields();
   }
 }

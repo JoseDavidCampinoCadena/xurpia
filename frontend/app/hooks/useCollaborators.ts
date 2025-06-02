@@ -1,22 +1,31 @@
 'use client';
 
-import { useState } from 'react';
-import { collaboratorsApi } from '../api/collaborators.api';
+import { useState, useEffect, useCallback } from 'react';
+import { collaboratorsApi, Collaborator as ApiCollaborator } from '../api/collaborators.api';
 
-export interface Collaborator {
-  id: number;
-  userId: number;
-  projectId: number;
-  role: string;
-  user: {
-    id: number;
-    name: string;
-    email: string;
+export type Collaborator = ApiCollaborator & {
+  user: ApiCollaborator['user'] & { description?: string };
+};
+
+// Helper type for axios error
+interface AxiosErrorLike {
+  response?: {
+    data?: {
+      message?: string;
+    };
   };
-  project: {
-    id: number;
-    name: string;
-  };
+}
+
+function getApiErrorMessage(err: unknown, fallback: string): string {
+  if (
+    typeof err === 'object' &&
+    err !== null &&
+    'response' in err &&
+    (err as AxiosErrorLike).response?.data?.message
+  ) {
+    return (err as AxiosErrorLike).response!.data!.message!;
+  }
+  return fallback;
 }
 
 export const useCollaborators = (projectId?: number) => {
@@ -24,33 +33,39 @@ export const useCollaborators = (projectId?: number) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCollaborators = async (projectId: number) => {
+  const fetchCollaborators = useCallback(async (projectId: number) => {
     try {
       setLoading(true);
       const data = await collaboratorsApi.getProjectCollaborators(projectId);
-      setCollaborators(data);
+      setCollaborators(data as Collaborator[]);
       setError(null);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al cargar colaboradores');
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Error al cargar colaboradores'));
       console.error('Error fetching collaborators:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const addCollaborator = async (userId: number, projectId: number, role: string = 'MEMBER') => {
+  const addCollaborator = async (
+    name: string,
+    email: string,
+    role: 'ADMIN' | 'MEMBER',
+    projectId: number
+  ) => {
     try {
       setLoading(true);
       const newCollaborator = await collaboratorsApi.addCollaborator({
-        userId,
-        projectId,
+        name,
+        email,
         role,
+        projectId,
       });
-      setCollaborators(prev => [...prev, newCollaborator]);
+      setCollaborators(prev => [...prev, newCollaborator as Collaborator]);
       setError(null);
-      return newCollaborator;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Error al agregar colaborador';
+      return newCollaborator as Collaborator;
+    } catch (err) {
+      const errorMessage = getApiErrorMessage(err, 'Error al agregar colaborador');
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -58,19 +73,19 @@ export const useCollaborators = (projectId?: number) => {
     }
   };
 
-  const updateCollaboratorRole = async (collaboratorId: number, role: string) => {
+  const updateCollaboratorRole = async (collaboratorId: number, role: 'ADMIN' | 'MEMBER') => {
     try {
       setLoading(true);
       const updatedCollaborator = await collaboratorsApi.updateRole(collaboratorId, { role });
       setCollaborators(prev =>
         prev.map(collab =>
-          collab.id === collaboratorId ? updatedCollaborator : collab
+          collab.id === collaboratorId ? (updatedCollaborator as Collaborator) : collab
         )
       );
       setError(null);
-      return updatedCollaborator;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Error al actualizar rol';
+      return updatedCollaborator as Collaborator;
+    } catch (err) {
+      const errorMessage = getApiErrorMessage(err, 'Error al actualizar rol');
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -86,8 +101,8 @@ export const useCollaborators = (projectId?: number) => {
         prev.filter(collab => collab.id !== collaboratorId)
       );
       setError(null);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Error al eliminar colaborador';
+    } catch (err) {
+      const errorMessage = getApiErrorMessage(err, 'Error al eliminar colaborador');
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -95,12 +110,11 @@ export const useCollaborators = (projectId?: number) => {
     }
   };
 
-  // Si se proporciona un projectId, cargar los colaboradores automáticamente
-  useState(() => {
+  useEffect(() => {
     if (projectId) {
       fetchCollaborators(projectId);
     }
-  });
+  }, [projectId, fetchCollaborators]);
 
   return {
     collaborators,
@@ -111,4 +125,4 @@ export const useCollaborators = (projectId?: number) => {
     removeCollaborator,
     refreshCollaborators: fetchCollaborators,
   };
-}; 
+};

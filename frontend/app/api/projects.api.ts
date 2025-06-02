@@ -20,4 +20,8 @@ export const projectsApi = {
   delete: async (id: number): Promise<void> => {
     await axios.delete(`/projects/${id}`);
   },
+
+  join: async (projectId: number, userId: number): Promise<void> => {
+    await axios.post(`/projects/${projectId}/join`);
+  },
 };

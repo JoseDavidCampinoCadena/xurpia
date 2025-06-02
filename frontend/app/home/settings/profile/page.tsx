@@ -8,13 +8,14 @@ import Image from 'next/image';
 import { FaUserCircle } from 'react-icons/fa';
 import { MdEmail } from 'react-icons/md';
 import { HiOutlineDocumentArrowDown } from 'react-icons/hi2';
+import countryList from 'react-select-country-list';
 
 const ProfilePage = () => {
   const { user, setUser } = useAuth();
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [description, setDescription] = useState("");
-  const [interest, setInterest] = useState(user?.interest || "");
+  const [profession, setProfession] = useState(user?.profession || "");
   const [gender, setGender] = useState(user?.gender || "");
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -23,14 +24,22 @@ const ProfilePage = () => {
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [cvFileName, setCvFileName] = useState<string>("");
+  const [nationality, setNationality] = useState(user?.nationality || "");
+  const [languages, setLanguages] = useState<string[]>(user?.languages || []);
+  const countryOptions = countryList().getData();
+  const languageOptions = [
+    'Español', 'Inglés', 'Francés', 'Alemán', 'Italiano', 'Portugués', 'Chino', 'Japonés', 'Ruso', 'Árabe', 'Otro'
+  ];
 
   useEffect(() => {
     if (user?.description) setDescription(user.description);
-    if (user?.interest) setInterest(user.interest);
+    if (user?.profession) setProfession(user.profession);
     if (user?.profileImage) setProfileImagePreview(user.profileImage);
     if (user?.name) setName(user.name);
     if (user?.email) setEmail(user.email);
     if (user?.gender) setGender(user.gender);
+    if (user?.nationality) setNationality(user.nationality);
+    if (user?.languages) setLanguages(user.languages);
   }, [user]);
 
   const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,10 +69,12 @@ const ProfilePage = () => {
       formData.append('name', name);
       formData.append('email', email);
       formData.append('description', description);
-      formData.append('interest', interest);
+      formData.append('profession', profession); // Guardar profesión correctamente
       formData.append('gender', gender);
       if (profileImage) formData.append('profileImage', profileImage);
       if (cvFile) formData.append('cv', cvFile);
+      formData.append('nationality', nationality);
+      formData.append('languages', JSON.stringify(languages));
       const updated = await usersApi.updateUserProfile(user.id, formData);
       setUser(updated);
       setCookie('user', JSON.stringify(updated));
@@ -192,15 +203,50 @@ const ProfilePage = () => {
                 <option value="Otro">Otro</option>
               </select>
             </div>
-            {/* Interés */}
+            {/* Nacionalidad */}
             <div>
-              <label className="block text-sm font-bold mb-1">Área de Interés</label>
+              <label className="block text-sm font-bold mb-1">Nacionalidad</label>
               <select
                 className="w-full rounded-lg px-4 py-2 bg-[#181818] border border-[#26D07C] text-white outline-none"
-                value={interest}
-                onChange={e => setInterest(e.target.value)}
+                value={nationality}
+                onChange={e => setNationality(e.target.value)}
+                required
               >
-                <option value="">Selecciona tu área de interés</option>
+                <option value="">Selecciona tu país</option>
+                {countryOptions.map((c) => (
+                  <option key={c.value} value={c.label}>{c.label}</option>
+                ))}
+              </select>
+            </div>
+            {/* Idiomas */}
+            <div>
+              <label className="block text-sm font-bold mb-1">Idiomas</label>
+              <select
+                multiple
+                className="w-full rounded-lg px-4 py-2 bg-[#181818] border border-[#26D07C] text-white outline-none"
+                value={languages}
+                onChange={e => {
+                  const selected = Array.from(e.target.selectedOptions, option => option.value);
+                  setLanguages(selected);
+                }}
+                required
+              >
+                {languageOptions.map(lang => (
+                  <option key={lang} value={lang}>{lang}</option>
+                ))}
+              </select>
+              <span className="text-xs text-gray-400">Puedes seleccionar uno o más idiomas (Ctrl/Cmd + click)</span>
+            </div>
+            {/* Interés */}
+            <div>
+              <label className="block text-sm font-bold mb-1">Profesión</label>
+              <select
+                className="w-full rounded-lg px-4 py-2 bg-[#181818] border border-[#26D07C] text-white outline-none"
+                value={profession}
+                onChange={e => setProfession(e.target.value)}
+                required
+              >
+                <option value="">Selecciona tu Profesión de interés</option>
                 <option value="Backend">Backend</option>
                 <option value="Frontend">Frontend</option>
                 <option value="Diseño">Diseño</option>

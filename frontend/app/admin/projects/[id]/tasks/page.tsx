@@ -4,12 +4,14 @@ import { useState } from 'react';
 import { useTasks } from '@/app/hooks/useTasks';
 import TaskModal from '../../../components/modals/TaskModal';
 import { Task } from '@/app/api/tasks.api';
+import { useProjects } from '@/app/hooks/useProjects';
 
 export default function TasksPage() {
   const { tasks, loading, error, createTask, updateTask, deleteTask } = useTasks();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const { projects } = useProjects();
 
   const handleCreateTask = () => {
     setModalMode('create');
@@ -72,7 +74,7 @@ export default function TasksPage() {
                     Asignado a: {task.assignee.name}
                   </p>
                   <p className="text-gray-600 dark:text-gray-400 text-sm">
-                    Proyecto: {task.project.name}
+                    Proyecto: {task.project?.name || 'Sin proyecto'}
                   </p>
                 </div>
                 <div className="flex gap-4 items-center">
@@ -108,13 +110,21 @@ export default function TasksPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         mode={modalMode}
-        task={selectedTask}
+        task={selectedTask || undefined}
         onSubmit={async (data) => {
           try {
+            let projectId = data.projectId;
+            if (!projectId && projects && projects.length > 0) {
+              projectId = projects[0].id;
+            }
+            if (!projectId) {
+              alert('No hay proyecto seleccionado.');
+              return;
+            }
             if (modalMode === 'create') {
-              await createTask(data);
+              await createTask({ ...data, projectId });
             } else if (modalMode === 'edit' && selectedTask) {
-              await updateTask(selectedTask.id, data);
+              await updateTask(selectedTask.id, { ...data, projectId });
             }
             setIsModalOpen(false);
           } catch (err) {
@@ -124,4 +134,4 @@ export default function TasksPage() {
       />
     </div>
   );
-} 
+}

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import CollaboratorModal from '@/app/admin/components/modals/CollaboratorModal';
 import { FaUserCircle, FaCopy } from 'react-icons/fa';
 import { useProjects } from '@/app/hooks/useProjects';
 import { useCollaborators } from '@/app/hooks/useCollaborators';
@@ -12,14 +11,7 @@ import { aiApi } from '@/app/api/ai.api';
 import { HiOutlineDocumentArrowDown } from 'react-icons/hi2';
 import ChatModal from '@/app/components/ChatModal';
 import { useRouter } from 'next/navigation';
-
-// Interfaz local para el modal y el estado 'selectedCollaborator'
-interface Collaborator {
-    id: number; // ID de la colaboración
-    name: string;
-    email: string;
-    role: string;
-}
+import HiringAssistant from '@/app/admin/components/modals/HiringAssistant';
 
 // Intereses disponibles para filtrar
 const INTERESES = [
@@ -40,8 +32,6 @@ const INTERESES = [
 export default function CollaboratorsPage() {
     const { user } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
-    const [selectedCollaborator, setSelectedCollaborator] = useState<Collaborator | null>(null);
     const [invitationCode, setInvitationCode] = useState<{ code: string; expiresAt?: string } | null>(null);
     const [isGeneratingCode, setIsGeneratingCode] = useState(false);
     const [copySuccess, setCopySuccess] = useState('');
@@ -55,9 +45,9 @@ export default function CollaboratorsPage() {
     const { projects, loading: loadingProjects } = useProjects();
     // Filtra los proyectos donde el usuario es owner o colaborador
     const accessibleProjects = projects.filter(
-      (project: any) =>
+      (project) =>
         project.ownerId === user?.id ||
-        (project.collaborators && project.collaborators.some((c: any) => c.user.id === user?.id))
+        (project.collaborators && project.collaborators.some((c) => c.user.id === user?.id))
     );
     const currentProjectId = accessibleProjects.length > 0 ? accessibleProjects[0].id : undefined;
     const currentProject = accessibleProjects.find(project => project.id === currentProjectId);
@@ -121,11 +111,10 @@ export default function CollaboratorsPage() {
           .catch(() => setAllUsers([]));
     }, [user?.id]);
 
-    // Corrige el orden de declaración de filteredUsers y el efecto de IA
+    // Filtro por profesión seleccionada
     const filteredUsers = selectedInterest
       ? allUsers.filter(user =>
-          (user.description || '').toLowerCase().includes(selectedInterest.toLowerCase()) ||
-          (user.gender || '').toLowerCase().includes(selectedInterest.toLowerCase())
+          (user.profession || '').toLowerCase() === selectedInterest.toLowerCase()
         )
       : allUsers;
 
@@ -140,25 +129,6 @@ export default function CollaboratorsPage() {
         .catch(() => setAiRecommendedUserIds([]));
     }, [selectedInterest, filteredUsers]);
 
-    const handleCreateCollaborator = () => {
-        setModalMode('create');
-        setSelectedCollaborator(null);
-        setIsModalOpen(true);
-    };
-
-    // El parámetro 'collaborator' aquí es del tipo CollaboratorFromAPI (el que viene del hook)
-    const handleEditCollaborator = (collaboratorFromHook: unknown) => {
-      const collaborator = collaboratorFromHook as { id: number; user: { name: string; email: string }; role: string };
-      setModalMode('edit');
-      setSelectedCollaborator({
-        id: collaborator.id,
-        name: collaborator.user.name,
-        email: collaborator.user.email,
-        role: collaborator.role,
-      });
-      setIsModalOpen(true);
-    };
-
     const handleDeleteCollaborator = async (collaboratorId: number) => {
         if (confirm('¿Estás seguro de que quieres eliminar este colaborador?')) {
             try {
@@ -171,51 +141,38 @@ export default function CollaboratorsPage() {
         }
     };
 
-    const handleSaveCollaborator = async (collaboratorData: Omit<Collaborator, 'id'>) => {
-        // ¡IMPORTANTE! Esta función necesita implementar la lógica de guardado REAL.
-        // Actualmente solo refresca la lista.
-        try {
-            if (!currentProjectId) {
-                alert('No hay un proyecto seleccionado.');
-                return;
-            }
-            if (modalMode === 'create') {
-                await collaboratorsApi.addCollaborator({
-                    name: collaboratorData.name,
-                    email: collaboratorData.email,
-                    role: collaboratorData.role as 'ADMIN' | 'MEMBER',
-                    projectId: currentProjectId,
-                });
-            } else if (modalMode === 'edit' && selectedCollaborator) {
-                await collaboratorsApi.updateRole(selectedCollaborator.id, {
-                    role: collaboratorData.role as 'ADMIN' | 'MEMBER',
-                });
-            }
-            refreshCollaborators(currentProjectId); // Refrescar la lista
-            setIsModalOpen(false);
-        } catch (err) {
-            console.error('Error al guardar colaborador:', err);
-            alert('Error al guardar el colaborador.');
-        }
-    };
-
+    // Al agregar colaborador, si el usuario no está ya en el proyecto, aumentar el conteo de proyectos
     const handleAddUserAsCollaborator = async (user: User) => {
-        if (!currentProjectId) return;
-        setAddUserLoading(user.id);
-        setAddUserError(null);
-        try {
-            await collaboratorsApi.addCollaborator({
-                name: user.name,
-                email: user.email,
-                role: 'MEMBER',
-                projectId: currentProjectId,
-            });
-            refreshCollaborators(currentProjectId);
-        } catch {
-            setAddUserError('No se pudo agregar el usuario.');
-        } finally {
-            setAddUserLoading(null);
+      if (!currentProjectId || !currentProject) return;
+      setAddUserLoading(user.id);
+      setAddUserError(null);
+      try {
+        await collaboratorsApi.addCollaborator({
+          name: user.name,
+          email: user.email,
+          role: 'MEMBER',
+          projectId: currentProjectId,
+          projectName: currentProject.name, // <-- necesario para el backend
+        });
+        // Si el usuario no estaba ya en el proyecto, aumentar el campo projects para ese usuario
+        if (!currentProject.collaborators?.some(c => c.user.id === user.id)) {
+          // Lógica para actualizar el campo projects del usuario agregado
+          // Suponiendo que tienes un endpoint para actualizar el usuario:
+          await usersApi.updateUserProfile(user.id, { projects: (user.projects || 0) + 1 });
         }
+        await refreshCollaborators(currentProjectId);
+        alert('Colaborador agregado exitosamente.');
+        setCopySuccess('Colaborador agregado exitosamente.');
+        setTimeout(() => setCopySuccess(''), 2000);
+      } catch (err: unknown) {
+        let errorMessage = 'Error al agregar colaborador.';
+        if (err instanceof Error) {
+          errorMessage = err.message;
+        }
+        setAddUserError(errorMessage);
+      } finally {
+        setAddUserLoading(null);
+      }
     };
 
     const getRoleColor = (role: string) => {
@@ -253,11 +210,12 @@ export default function CollaboratorsPage() {
                 {/* Sección para añadir manualmente y generar código */}
                 {isOwner && (
                     <div className="flex flex-wrap gap-4 mb-8 items-center">
+                        {/* Botón de Sugerencias de IA */}
                         <button
-                            onClick={handleCreateCollaborator}
+                            onClick={() => setIsModalOpen((prev) => !prev)}
                             className="bg-indigo-600 text-white px-5 py-2.5 rounded-md hover:bg-indigo-700 transition-colors text-sm font-medium"
                         >
-                            Añadir Manualmente
+                            Sugerencias de IA
                         </button>
                         <button
                             onClick={handleGenerateInvitationCode}
@@ -295,117 +253,140 @@ export default function CollaboratorsPage() {
                 )}
  
                 {/* Solo el owner puede editar/eliminar colaboradores y roles */}
-                {collaborators.map((collaborator: unknown) => {
-                  const c = collaborator as { id: number; user: { name: string; email: string; description?: string }; role: string };
+                {collaborators.map((collaborator) => {
+                  const c = collaborator as { id: number; user: { id: number; name: string; email: string; description?: string }; role: string };
+                  const isProjectOwner = c.user?.id === currentProject?.ownerId;
+                  const isCurrentUser = c.user?.id === user?.id;
                   return (
-                    <div key={c.id} className="bg-gray-50 dark:bg-zinc-900 rounded-lg p-4 shadow hover:shadow-md transition-shadow">
-                        <div className="flex items-start space-x-3">
-                            <FaUserCircle className="w-10 h-10 text-gray-400 dark:text-gray-500 mt-1" />
-                            <div className="flex-1">
-                                <h3 className="text-gray-800 dark:text-white font-semibold text-md">
-                                    {c.user?.name || 'Nombre no disponible'}
-                                </h3>
-                                <p className="text-gray-500 dark:text-gray-400 text-xs break-all">
-                                    {c.user?.email || 'Email no disponible'}
-                                </p>
-                                <p className={`text-xs font-medium mt-1 ${getRoleColor(c.role)}`}>
-                                    {c.role ? (c.role.charAt(0).toUpperCase() + c.role.slice(1).toLowerCase()) : 'Rol no definido'}
-                                </p>
-                            </div>
+                    <div key={c.id} className="bg-gray-50 dark:bg-zinc-900 rounded-lg p-4 shadow hover:shadow-md transition-shadow mt-8">
+                      <div className="flex items-start space-x-6 mt-2">
+                          <FaUserCircle className="w-10 h-10 text-gray-400 dark:text-gray-500 mt-4" />
+                          <div className="flex-1">
+                              <h3 className="text-gray-800 dark:text-white font-semibold text-md">
+                                  {c.user?.name || 'Nombre no disponible'}
+                              </h3>
+                              <p className="text-gray-500 dark:text-gray-400 text-xs break-all">
+                                  {c.user?.email || 'Email no disponible'}
+                              </p>
+                              <p className={`text-xs font-medium mt-1 ${getRoleColor(c.role)}`}>
+                                  {c.role ? (c.role.charAt(0).toUpperCase() + c.role.slice(1).toLowerCase()) : 'Rol no definido'}
+                              </p>
+                          </div>
+                      </div>
+                      {/* El owner no puede editarse/eliminarse a sí mismo, pero puede eliminar a otros */}
+                      {isOwner && !isProjectOwner && (
+                        <div className="mt-4 flex justify-end gap-2">
+                          <button
+                              onClick={() => handleDeleteCollaborator(c.id)}
+                              className="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 px-3 py-1 rounded-md border border-red-500 dark:border-red-400 hover:bg-red-50 dark:hover:bg-red-900"
+                          >
+                              Eliminar
+                          </button>
                         </div>
-                        {isOwner && (
-                            <div className="mt-4 flex justify-end gap-2">
-                                <button
-                                    onClick={() => handleEditCollaborator(collaborator)}
-                                    className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 px-3 py-1 rounded-md border border-blue-500 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900"
-                                >
-                                    Editar Rol
-                                </button>
-                                <button
-                                    onClick={() => handleDeleteCollaborator(c.id)}
-                                    className="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 px-3 py-1 rounded-md border border-red-500 dark:border-red-400 hover:bg-red-50 dark:hover:bg-red-900"
-                                >
-                                    Eliminar
-                                </button>
-                            </div>
-                        )}
+                      )}
+                      {/* Si el usuario actual es colaborador (no owner), puede salir del proyecto */}
+                      {isCurrentUser && !isOwner && (
+                        <div className="mt-4 flex justify-end">
+                          <button
+                            onClick={() => handleDeleteCollaborator(c.id)}
+                            className="text-xs text-yellow-600 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-300 px-3 py-1 rounded-md border border-yellow-500 dark:border-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900"
+                          >
+                            Salir del proyecto
+                          </button>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
             </div>
 
+            {/* Modal de Sugerencias de IA */}
+            {isModalOpen && (
+              <HiringAssistant />
+            )}
+
             {/* Formulario de intereses y filtro de usuarios */}
             {isOwner && (
               <div className="mb-8">
-                <h2 className="font-semibold mb-2">Agregar colaborador por interés</h2>
+                <h2 className="font-semibold mb-2 mt-12">Agregar colaborador por Profesión</h2>
                 <form className="flex flex-col md:flex-row gap-4 items-center mb-4">
                   <select
                     className="border rounded px-3 py-2 text-sm"
                     value={selectedInterest}
                     onChange={e => setSelectedInterest(e.target.value)}
                   >
-                    <option value="">Selecciona un área de interés</option>
+                    <option value="">Selecciona una Profesión de interés</option>
                     {INTERESES.map(interes => (
                       <option key={interes} value={interes}>{interes}</option>
                     ))}
                   </select>
                 </form>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {filteredUsers.map(user => (
-                    <div
-                      key={user.id}
-                      className={`p-4 rounded border shadow flex flex-col gap-1 bg-white dark:bg-zinc-800 ${aiRecommendedUserIds.includes(user.id) ? 'border-green-400 ring-2 ring-green-300' : 'border-gray-200 dark:border-zinc-700'}`}
-                    >
-                      <span className="font-semibold text-zinc-800 dark:text-white">{user.name}</span>
-                      <span className="text-xs text-zinc-500 dark:text-zinc-300">{user.email}</span>
-                      <span className="text-xs text-zinc-400 dark:text-zinc-400">{user.description}</span>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {user.cvUrl && (
-                          <a
-                            href={user.cvUrl.startsWith('http') ? user.cvUrl : `http://localhost:3001${user.cvUrl}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs underline text-[#26D07C] flex items-center gap-1"
-                          >
-                            <HiOutlineDocumentArrowDown className="inline-block" /> Ver CV
-                          </a>
-                        )}
-                        <button
-                          className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"
-                          onClick={() => router.push(`/admin/projects/${id}/chats`)}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v6a2.25 2.25 0 01-2.25 2.25H6.25L2.75 20.25V6.75A2.25 2.25 0 015 4.5h14.5a2.25 2.25 0 012.25 2.25z" />
-                          </svg>
-                          Chat
-                        </button>
-                      </div>
-                      <button
-                        className="mt-2 px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-xs disabled:opacity-50"
-                        onClick={() => handleAddUserAsCollaborator(user)}
-                        disabled={addUserLoading === user.id}
-                      >
-                        {addUserLoading === user.id ? 'Agregando...' : 'Agregar como colaborador'}
-                      </button>
-                      {addUserError && addUserLoading === user.id && (
-                        <span className="text-xs text-red-500">{addUserError}</span>
-                      )}
-                      {aiRecommendedUserIds.includes(user.id) && (
-                        <span className="text-xs text-green-600 font-bold">Recomendado por IA</span>
-                      )}
+                  {filteredUsers.length === 0 ? (
+                    <div className="col-span-2 text-center text-zinc-500 dark:text-zinc-400 py-8">
+                      No se encontraron usuarios con la profesión seleccionada.
                     </div>
-                  ))}
+                  ) : (
+                    filteredUsers.map(user => (
+                      <div
+                        key={user.id}
+                        className={`p-4 rounded border shadow flex flex-col gap-1 bg-white dark:bg-zinc-800 ${aiRecommendedUserIds.includes(user.id) ? 'border-green-400 ring-2 ring-green-300' : 'border-gray-200 dark:border-zinc-700'}`}
+                      >
+                        <span className="font-semibold text-zinc-800 dark:text-white">{user.name}</span>
+                        <span className="text-xs text-zinc-500 dark:text-zinc-300">{user.email}</span>
+                        {user.description && (
+                          <span className="text-xs text-zinc-400 dark:text-zinc-400">{user.description}</span>
+                        )}
+                        {user.profession && (
+                          <span className="text-xs text-zinc-400 dark:text-zinc-400">Profesión: <span className='text-sm font-extrabold'>{user.profession}</span></span>
+                        )}
+                        {user.nationality && (
+                          <span className="text-xs text-zinc-400 dark:text-zinc-400">Nacionalidad: {user.nationality}</span>
+                        )}
+                        {user.languages && user.languages.length > 0 && (
+                          <span className="text-xs text-zinc-400 dark:text-zinc-400">Idiomas: {user.languages.join(', ')}</span>
+                        )}
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {user.cvUrl && (
+                            <a
+                              href={user.cvUrl.startsWith('http') ? user.cvUrl : `http://localhost:3001${user.cvUrl}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs underline text-[#26D07C] flex items-center gap-1"
+                            >
+                              <HiOutlineDocumentArrowDown className="inline-block" /> Ver CV
+                            </a>
+                          )}
+                          <button
+                            className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"
+                            onClick={() => router.push(`/admin/projects/${currentProjectId}/chats?userId=${user.id}`)}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v6a2.25 2.25 0 01-2.25 2.25H6.25L2.75 20.25V6.75A2.25 2.25 0 015 4.5h14.5a2.25 2.25 0 012.25 2.25z" />
+                            </svg>
+                            Chat
+                          </button>
+                        </div>
+                        <button
+                          className="mt-2 px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-xs disabled:opacity-50"
+                          onClick={() => handleAddUserAsCollaborator(user)}
+                          disabled={addUserLoading === user.id}
+                        >
+                          {addUserLoading === user.id ? 'Agregando...' : 'Agregar como colaborador'}
+                        </button>
+                        {addUserError && addUserLoading === user.id && (
+                          <span className="text-xs text-red-500">{addUserError}</span>
+                        )}
+                        {aiRecommendedUserIds.includes(user.id) && (
+                          <span className="text-xs text-green-600 font-bold">Recomendado por IA</span>
+                        )}
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )}
 
-            <CollaboratorModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                mode={modalMode}
-                collaborator={selectedCollaborator} // Este es de tipo 'Collaborator' local
-                onSave={handleSaveCollaborator}
-            />
             {chatUser && (
               <ChatModal isOpen={!!chatUser} onClose={() => setChatUser(null)} user={chatUser} />
             )}

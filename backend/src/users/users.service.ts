@@ -18,7 +18,11 @@ export class UsersService {
         profileImage: true,
         cvUrl: true,
         gender: true,
-        interest: true,
+        profession: true,
+        nationality: true,
+        age: true,
+        languages: true,
+        projectsCount: true,
       },
     });
   }
@@ -34,7 +38,11 @@ export class UsersService {
         profileImage: true,
         cvUrl: true,
         gender: true,
-        interest: true,
+        profession: true,
+        nationality: true,
+        age: true,
+        languages: true,
+        projectsCount: true,
       },
     });
 
@@ -56,7 +64,11 @@ export class UsersService {
         profileImage: true,
         cvUrl: true,
         gender: true,
-        interest: true,
+        profession: true,
+        nationality: true,
+        age: true,
+        languages: true,
+        projectsCount: true,
       },
     });
 
@@ -79,7 +91,11 @@ export class UsersService {
         profileImage: true,
         cvUrl: true,
         gender: true,
-        interest: true,
+        profession: true,
+        nationality: true,
+        age: true,
+        languages: true,
+        projectsCount: true,
       },
     });
   }
@@ -95,7 +111,11 @@ export class UsersService {
         profileImage: true,
         cvUrl: true,
         gender: true,
-        interest: true,
+        profession: true,
+        nationality: true,
+        age: true,
+        languages: true,
+        projectsCount: true,
       },
     });
   }
@@ -109,5 +129,21 @@ export class UsersService {
     const hashed = await bcrypt.hash(dto.newPassword, 10);
     await this.prisma.user.update({ where: { id }, data: { password: hashed } });
     return { message: 'Contraseña cambiada con éxito.' };
+  }
+
+  async getUniqueFields() {
+    const users = await this.prisma.user.findMany({
+      select: {
+        profession: true,
+        nationality: true,
+        gender: true,
+        languages: true,
+      },
+    });
+    const professions = Array.from(new Set(users.map(u => u.profession).filter(Boolean)));
+    const nationalities = Array.from(new Set(users.map(u => u.nationality).filter(Boolean)));
+    const genders = Array.from(new Set(users.map(u => u.gender).filter(Boolean)));
+    const languages = Array.from(new Set(users.flatMap(u => (u.languages || [])).filter(Boolean)));
+    return { professions, nationalities, genders, languages };
   }
 }

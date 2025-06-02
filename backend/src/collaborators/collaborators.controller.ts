@@ -13,7 +13,7 @@ import { CollaboratorsService } from './collaborators.service';
 import { AddCollaboratorDto, UpdateCollaboratorDto } from './dto/collaborator.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { EmailService } from '../email/email.service';
-import { RecommendCollaboratorsDto } from './dto/recommend-collaborators.dto';
+import { HireAiDto } from '../collaborators/dto/ai-hiring.dto';
 import axios from 'axios';
 
 @Controller('collaborators')
@@ -23,6 +23,15 @@ export class CollaboratorsController {
     private readonly collaboratorsService: CollaboratorsService,
     private readonly emailService: EmailService, // Inyectamos el servicio de email
   ) {}
+  
+ @Post('hire-ai')
+  async hireWithAI(@Request() req, @Body() dto: HireAiDto) {
+    const userId = req.user.id;  // asumiendo que usas JWT y tienes el id en user
+    // Aquí podrías validar si el userId tiene permiso si quieres
+
+    const result = await this.collaboratorsService.hireWithAI(dto.prompt);
+    return { suggestions: result };
+  }
 
   @Post()
   async addCollaborator(@Request() req, @Body() addCollaboratorDto: AddCollaboratorDto) {
@@ -121,28 +130,6 @@ export class CollaboratorsController {
     return collaborator;
   }
 
-  @Post('recommend')
-  async recommendCollaborators(@Body() body: RecommendCollaboratorsDto) {
-    // Llama a OpenAI para recomendar usuarios
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) throw new Error('OPENAI_API_KEY no configurada');
-    const prompt = `Dado el área de interés "${body.interest}", y la siguiente lista de usuarios con su descripción, ¿cuáles 3 usuarios recomendarías para ese interés? Devuelve solo un array de IDs separados por coma.\nUsuarios:\n${body.users.map(u => `ID: ${u.id}, Nombre: ${u.name}, Descripción: ${u.description || ''}`).join('\n')}`;
-    const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-      model: 'gpt-3.5-turbo',
-      messages: [
-        { role: 'system', content: 'Eres un asistente experto en selección de talento.' },
-        { role: 'user', content: prompt }
-      ],
-      max_tokens: 50,
-      temperature: 0.2,
-    }, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    // Extrae los IDs del resultado
-    const ids = (response.data.choices?.[0]?.message?.content.match(/\d+/g) || []).map(Number);
-    return { recommendedUserIds: ids };
+
   }
-}
+

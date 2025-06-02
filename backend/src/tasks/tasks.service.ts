@@ -7,7 +7,7 @@ export class TasksService {
   constructor(private prisma: PrismaService) {}
 
   async create(userId: number, dto: CreateTaskDto) {
-    // Verificar si el usuario tiene acceso al proyecto
+    console.log('DEBUG createTask - userId:', userId, 'projectId:', dto.projectId);
     const project = await this.prisma.project.findFirst({
       where: {
         id: dto.projectId,
@@ -22,9 +22,24 @@ export class TasksService {
           },
         ],
       },
+      include: {
+        owner: true,
+        collaborators: true,
+      },
     });
+    console.log('DEBUG project found:', project);
+
+    const debugProject = await this.prisma.project.findUnique({
+      where: { id: dto.projectId },
+      include: {
+        owner: true,
+        collaborators: true,
+      },
+    });
+    console.log('DEBUG direct project:', debugProject);
 
     if (!project) {
+      console.log('DEBUG: No access to project for user', userId, 'on project', dto.projectId);
       throw new ForbiddenException('You do not have access to this project');
     }
 
@@ -185,4 +200,4 @@ export class TasksService {
 
     return { message: 'Task deleted successfully' };
   }
-} 
+}

@@ -29,9 +29,13 @@ model User {
   Conversation   Conversation[]
   notes          Note[]         @relation("UserNotes") // Explicit relation name
   gender         String?
-  interest       String? // Área de interés del usuario
+  profession     String?
+  nationality    String?
+  age            Int?
+  languages      String[]
   sentMessages   Message[] @relation("MessageFromUser")
   receivedMessages Message[] @relation("MessageToUser")
+  projectsCount   Int            @default(0) // Number of projects the user is involved in
 }
 
 model Project {
