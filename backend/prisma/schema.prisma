@@ -64,8 +64,8 @@ model Task {
   status      TaskStatus @default(PENDING)
   projectId   Int
   project     Project    @relation("ProjectTasks", fields: [projectId], references: [id], onDelete: Cascade)
-  assigneeId  Int
-  assignee    User       @relation("AssignedTasks", fields: [assigneeId], references: [id])
+  assigneeId  Int?
+  assignee    User?      @relation("AssignedTasks", fields: [assigneeId], references: [id])
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 }

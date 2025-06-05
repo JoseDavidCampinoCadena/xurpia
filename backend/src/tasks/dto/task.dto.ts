@@ -13,12 +13,12 @@ export class CreateTaskDto {
   @IsOptional()
   @IsIn(['PENDING', 'IN_PROGRESS', 'COMPLETED'])
   status?: TaskStatus;
-
   @IsInt()
   projectId: number;
 
   @IsInt()
-  assigneeId: number;
+  @IsOptional()
+  assigneeId?: number;
 }
 
 export class UpdateTaskDto {

@@ -12,9 +12,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       secretOrKey: configService.get('JWT_SECRET'),
     });
   }
-
   async validate(payload: any) {
-    // Return userId as userId, not id, so req.user.userId is defined
-    return { userId: payload.userId };
+    // Return id as id to match the expected user object structure
+    return { id: payload.userId };
   }
 }

@@ -32,12 +32,11 @@ export class CollaboratorsController {
     const result = await this.collaboratorsService.hireWithAI(dto.prompt);
     return { suggestions: result };
   }
-
   @Post()
   async addCollaborator(@Request() req, @Body() addCollaboratorDto: AddCollaboratorDto) {
     console.log('📩 Datos recibidos en el backend:', addCollaboratorDto); // ⬅️ Aquí lo pones
 
-    const collaborator = await this.collaboratorsService.addCollaborator(req.user.userId, addCollaboratorDto);
+    const collaborator = await this.collaboratorsService.addCollaborator(req.user.id, addCollaboratorDto);
 
     await this.emailService.sendInvitationEmail(
       addCollaboratorDto.email,
@@ -47,7 +46,6 @@ export class CollaboratorsController {
 
     return collaborator;
   }
-
   @Post('generate-invitation-code')
   async generateInvitationCode(@Request() req, @Body() body: { projectId: number }) {
     // Solo el owner puede generar el código
@@ -57,7 +55,7 @@ export class CollaboratorsController {
     if (!project) {
       throw new Error('Project not found');
     }
-    if (project.ownerId !== req.user.userId) {
+    if (project.ownerId !== req.user.id) {
       throw new Error('Solo el owner puede generar el código de invitación.');
     }
     // Si ya tiene invitationCode, lo retorna
@@ -78,22 +76,20 @@ export class CollaboratorsController {
     });
     return { code };
   }
-
   @Get('project/:projectId')
   findProjectCollaborators(@Request() req, @Param('projectId') projectId: string) {
-    return this.collaboratorsService.findProjectCollaborators(req.user.userId, +projectId);
+    return this.collaboratorsService.findProjectCollaborators(req.user.id, +projectId);
   }
 
   @Patch(':id')
   updateRole(@Request() req, @Param('id') id: string, @Body() updateCollaboratorDto: UpdateCollaboratorDto) {
-    return this.collaboratorsService.updateRole(req.user.userId, +id, updateCollaboratorDto);
+    return this.collaboratorsService.updateRole(req.user.id, +id, updateCollaboratorDto);
   }
 
   @Delete(':id')
   remove(@Request() req, @Param('id') id: string) {
-    return this.collaboratorsService.removeCollaborator(req.user.userId, +id);
+    return this.collaboratorsService.removeCollaborator(req.user.id, +id);
   }
-
   @Post('join-by-code')
   async joinByInvitationCode(@Request() req, @Body() body: { code: string }) {
     // Buscar el proyecto por invitationCode
@@ -104,7 +100,7 @@ export class CollaboratorsController {
       throw new Error('Código de invitación inválido.');
     }
     // Validar límite de proyectos (1 propio, 2 como colaborador)
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const ownedCount = await this.collaboratorsService['prisma'].project.count({ where: { ownerId: userId } });
     const collabCount = await this.collaboratorsService['prisma'].collaborator.count({ where: { userId } });
     if (ownedCount + collabCount >= 3) {

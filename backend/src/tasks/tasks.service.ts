@@ -44,11 +44,13 @@ export class TasksService {
     console.log('DEBUG direct project:', debugProject);    if (!project) {
       console.log('DEBUG: No access to project for user', userId, 'on project', dto.projectId);
       throw new ForbiddenException('You do not have access to this project');
-    }
-
-    const newTask = await this.prisma.task.create({
+    }    const newTask = await this.prisma.task.create({
       data: {
-        ...dto,
+        title: dto.title,
+        description: dto.description,
+        status: dto.status || 'PENDING',
+        projectId: dto.projectId,
+        assigneeId: dto.assigneeId || null,
       },
       include: {
         assignee: {
@@ -67,13 +69,13 @@ export class TasksService {
       },
     });
 
-    // Send notification to the assigned user if it's not the creator
-    if (dto.assigneeId !== userId) {
+    // Send notification to the assigned user if there is an assignee and it's not the creator
+    if (dto.assigneeId && dto.assigneeId !== userId) {
       await this.notificationsService.createTaskAssignmentNotification(
         dto.assigneeId,
         newTask.id,
         newTask.title,
-        newTask.project.name,
+        newTask.project?.name || 'Unknown Project',
       );
     }
 
@@ -243,7 +245,7 @@ export class TasksService {
           },
         },        tasks: {
           where: {
-            assigneeId: { equals: null }, // Only unassigned tasks
+            assigneeId: null, // Only unassigned tasks
           },
         },
         owner: {
