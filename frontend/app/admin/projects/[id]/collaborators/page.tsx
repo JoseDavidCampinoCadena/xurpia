@@ -366,14 +366,30 @@ export default function CollaboratorsPage() {
                             </svg>
                             Chat
                           </button>
-                        </div>
-                        <button
-                          className="mt-2 px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-xs disabled:opacity-50"
-                          onClick={() => handleAddUserAsCollaborator(user)}
-                          disabled={addUserLoading === user.id}
-                        >
-                          {addUserLoading === user.id ? 'Agregando...' : 'Agregar como colaborador'}
-                        </button>
+                        </div>                        {(() => {
+                          const isAlreadyCollaborator = collaborators.some(collab => collab.user.id === user.id);
+                          
+                          if (isAlreadyCollaborator) {
+                            return (
+                              <button
+                                className="mt-2 px-3 py-1 bg-green-600 text-white rounded cursor-default text-xs"
+                                disabled
+                              >
+                                Ya Pertenece a tu proyecto
+                              </button>
+                            );
+                          }
+                          
+                          return (
+                            <button
+                              className="mt-2 px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-xs disabled:opacity-50"
+                              onClick={() => handleAddUserAsCollaborator(user)}
+                              disabled={addUserLoading === user.id}
+                            >
+                              {addUserLoading === user.id ? 'Agregando...' : 'Agregar como colaborador'}
+                            </button>
+                          );
+                        })()}
                         {addUserError && addUserLoading === user.id && (
                           <span className="text-xs text-red-500">{addUserError}</span>
                         )}

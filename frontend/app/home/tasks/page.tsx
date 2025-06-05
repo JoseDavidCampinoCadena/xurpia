@@ -1,271 +1,318 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTasks } from '@/app/hooks/useTasks';
 import { useAuth } from '@/app/hooks/useAuth';
-import { useProjects } from '@/app/hooks/useProjects';
-import { FaRobot } from 'react-icons/fa';
-import { FaCheckCircle } from 'react-icons/fa';
-import { TaskStatus } from '@/app/types/api.types';
+import { useEvaluations } from '@/app/hooks/useEvaluations';
+import { useNotifications } from '@/app/hooks/useNotifications';
+import SkillAssessment from '@/app/components/SkillAssessment';
+import { FaBell, FaCheckCircle, FaPlay } from 'react-icons/fa';
 
 export default function TasksPage() {
   const { tasks, loading, error, updateTask } = useTasks();
   const { user } = useAuth();
-  const { projects, loading: loadingProjects } = useProjects();
+  const { getUserEvaluations } = useEvaluations();
+  const { notifications, unreadCount, markAsRead } = useNotifications();
+  
+  const [showAssessment, setShowAssessment] = useState(false);
+  const [userEvaluations, setUserEvaluations] = useState<Array<{
+    id: number;
+    profession: string;
+    technology: string;
+    level: string;
+    score: number;
+    createdAt: string;
+  }>>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
 
-  const [showLevelForm, setShowLevelForm] = useState(false);
-  const [professionConfirmed, setProfessionConfirmed] = useState<boolean | null>(null);
-  const [tech, setTech] = useState('');
-  const [levelResult, setLevelResult] = useState<string | null>(null);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<string[]>([]);
-  const [questions, setQuestions] = useState<string[]>([]);
+  useEffect(() => {
+    const loadUserEvaluations = async () => {
+      try {
+        const evaluations = await getUserEvaluations();
+        setUserEvaluations(evaluations);
+          // Si el usuario no tiene evaluaciones, mostrar la evaluación
+        if (evaluations.length === 0) {
+          setShowAssessment(true);
+        }
+      } catch (err) {
+        console.error('Error loading evaluations:', err);
+      }
+    };
 
-  // Llama a la API de Hugging Face para generar preguntas
-  const generateQuestions = async (tech: string, languageAnswer?: string) => {
+    if (user) {
+      loadUserEvaluations();
+    }
+  }, [user, getUserEvaluations]);
+  const handleMarkTaskComplete = async (taskId: number) => {
     try {
-      // Si ya tenemos la respuesta del lenguaje, pásala al backend para personalizar el resto de preguntas
-      if (languageAnswer) {
-        const response = await fetch('/api/ai/generate-questions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tech: languageAnswer }), // SOLO usa el lenguaje para la IA
-        });
-        if (!response.ok) throw new Error('Error generando preguntas IA');
-        const data = await response.json();
-        return data.questions as string[];
-      } else {
-        // Primera pregunta siempre sobre el lenguaje
-        return ['¿En qué lenguaje te especializas?'];
-      }
-    } catch {
-      // fallback local
-      if (languageAnswer) {
-        const base = [
-          `¿Qué es ${languageAnswer}?`,
-          `¿Para qué sirve ${languageAnswer}?`,
-          `¿Cómo declarar una variable en ${languageAnswer}?`,
-          `¿Qué es una función en ${languageAnswer}?`,
-          `¿Qué es el scope en ${languageAnswer}?`,
-          `¿Qué es el hoisting en ${languageAnswer}?`,
-          `¿Qué es una promesa en ${languageAnswer}?`,
-          `¿Cómo manejar errores en ${languageAnswer}?`,
-          `¿Qué es async/await en ${languageAnswer}?`,
-          `¿Cómo optimizar el rendimiento en ${languageAnswer}?`
-        ];
-        return base;
-      } else {
-        return ['¿En qué lenguaje te especializas?'];
-      }
+      await updateTask(taskId, { status: 'COMPLETED' });
+    } catch (err) {
+      console.error('Error updating task:', err);
     }
   };
 
-  // Llama a la API de Hugging Face para evaluar el nivel
-  const evaluateLevel = async (answers: string[], tech: string) => {
+  const handleMarkTaskInProgress = async (taskId: number) => {
     try {
-      const response = await fetch('/api/ai/evaluate-level', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers, tech }),
-      });
-      if (!response.ok) throw new Error('Error evaluando nivel IA');
-      const data = await response.json();
-      // Normaliza la respuesta para aceptar variantes del modelo HF
-      const level = (data.level || '').toLowerCase();
-      if (level.includes('avanzado')) return 'Avanzado';
-      if (level.includes('intermedio')) return 'Intermedio';
-      if (level.includes('principiante')) return 'Principiante';
-      // fallback si la IA responde algo inesperado
-      return 'Principiante';
-    } catch {
-      // fallback local
-      const score = answers.reduce((acc, a) => acc + (a && a.length > 20 ? 2 : a && a.length > 10 ? 1 : 0), 0);
-      if (score > 15) return 'Avanzado';
-      if (score > 8) return 'Intermedio';
-      return 'Principiante';
+      await updateTask(taskId, { status: 'IN_PROGRESS' });
+    } catch (err) {
+      console.error('Error updating task:', err);
     }
   };
 
-  // Mostrar formulario si el usuario no tiene nivel
-  if (showLevelForm) {
-    if (levelResult) {
-      return (
-        <div className="p-4 max-w-xl mx-auto bg-gradient-to-br from-zinc-900 via-emerald-900 to-black rounded-3xl shadow-2xl border-2 border-emerald-700 animate-fade-in mt-24">
-          <div className="flex items-center gap-3 mb-4">
-            <FaRobot className="text-emerald-400 text-3xl animate-bounce" />
-            <h2 className="text-2xl font-extrabold text-emerald-300 drop-shadow">¡Tu resultado IA!</h2>
-          </div>
-          <div className="bg-zinc-800/80 rounded-xl p-4 mb-4 flex flex-col items-center">
-            <p className="text-emerald-200 text-lg mb-2 font-semibold">Tu nivel en <b className="text-emerald-400">{tech}</b> es:</p>
-            <span className="text-3xl font-black text-emerald-400 drop-shadow-glow animate-pulse">{levelResult}</span>
-            <p className="text-emerald-100 mt-2">Rol: <b className="text-emerald-300">{user?.name}: [{tech}] [{levelResult}]</b></p>
-            <FaCheckCircle className="text-emerald-400 text-4xl mt-4 animate-pulse" />
-          </div>
-          <button className="mt-6 px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-800 hover:from-emerald-700 hover:to-emerald-900 transition text-white rounded-full shadow-lg font-bold text-lg tracking-wide" onClick={() => setShowLevelForm(false)}>
-            Volver a las tareas
-          </button>
-        </div>
-      );
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'COMPLETED':
+        return 'text-green-600 bg-green-100';
+      case 'IN_PROGRESS':
+        return 'text-yellow-600 bg-yellow-100';
+      case 'PENDING':
+        return 'text-gray-600 bg-gray-100';
+      default:
+        return 'text-gray-600 bg-gray-100';
     }
-    if (professionConfirmed === null) {
-      return (
-        <div className="p-4 max-w-xl mx-auto bg-gradient-to-br from-zinc-900 via-emerald-900 to-black rounded-3xl shadow-2xl border-2 border-emerald-700 animate-fade-in mt-24">
-          <div className="flex items-center gap-3 mb-4">
-            <FaRobot className="text-emerald-400 text-3xl animate-bounce" />
-            <h2 className="text-2xl font-extrabold text-emerald-300 drop-shadow">Confirma tu profesión</h2>
-          </div>
-          <p className="text-emerald-200 mb-4 text-lg">¿Tu profesión es <b className="text-emerald-400">{user?.profession}</b>?</p>
-          <div className="flex gap-6 mt-4 justify-center">
-            <button className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 transition text-white rounded-full font-bold text-lg shadow" onClick={async () => { setProfessionConfirmed(true); setTech(user?.profession || ''); setQuestions(await generateQuestions(user?.profession || '')); }}>Sí</button>
-            <button className="px-6 py-2 bg-zinc-700 hover:bg-zinc-800 transition text-emerald-200 rounded-full font-bold text-lg shadow" onClick={() => setProfessionConfirmed(false)}>No</button>
-          </div>
-        </div>
-      );
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'COMPLETED':
+        return 'Completada';
+      case 'IN_PROGRESS':
+        return 'En Progreso';
+      case 'PENDING':
+        return 'Pendiente';
+      default:
+        return status;
     }
-    if (professionConfirmed === false && !tech) {
-      return (
-        <div className="p-4 max-w-xl mx-auto bg-gradient-to-br from-zinc-900 via-emerald-900 to-black rounded-3xl shadow-2xl border-2 border-emerald-700 animate-fade-in">
-          <div className="flex items-center gap-3 mb-4">
-            <FaRobot className="text-yellow-400 text-3xl animate-bounce" />
-            <h2 className="text-2xl font-extrabold text-emerald-300 drop-shadow">¿Cuál es tu profesión?</h2>
-          </div>
-          <input className="w-full p-3 rounded-xl mb-6 bg-zinc-800 text-emerald-200 border-2 border-emerald-700 focus:ring-2 focus:ring-emerald-400 focus:outline-none text-lg" value={tech} onChange={e => setTech(e.target.value)} placeholder="Ejemplo: Frontend, Backend, QA..." />
-          <button className="px-6 py-2 bg-gradient-to-r from-emerald-600 to-emerald-800 hover:from-emerald-700 hover:to-emerald-900 transition text-white rounded-full font-bold text-lg shadow" onClick={async () => { setQuestions(await generateQuestions(tech)); setProfessionConfirmed(true); }}>Continuar</button>
-        </div>
-      );
+  };
+
+  const getLevelColor = (level: string) => {
+    switch (level) {
+      case 'ADVANCED':
+        return 'text-green-600 bg-green-100';
+      case 'INTERMEDIATE':
+        return 'text-yellow-600 bg-yellow-100';
+      case 'BEGINNER':
+        return 'text-blue-600 bg-blue-100';
+      default:
+        return 'text-gray-600 bg-gray-100';
     }
-    // Si estamos en la primera pregunta, solo muestra esa
-    if (questions.length > 0 && currentQuestion === 0) {
-      return (
-        <div className="p-4 max-w-xl mx-auto bg-gradient-to-br from-zinc-900 via-emerald-900 to-black rounded-3xl shadow-2xl border-2 border-emerald-700 animate-fade-in">
-          <div className="flex items-center gap-3 mb-4">
-            <FaRobot className="text-indigo-400 text-3xl animate-bounce" />
-            <h2 className="text-2xl font-extrabold text-emerald-300 drop-shadow">Test de nivel: {tech}</h2>
-          </div>
-          <div className="bg-zinc-800/80 rounded-xl p-4 mb-4">
-            <p className="text-emerald-200 mb-2 text-lg font-semibold">Pregunta 1 de {questions.length}</p>
-            <p className="text-emerald-100 mb-4 font-semibold text-xl">{questions[0]}</p>
-            <textarea className="w-full p-3 rounded-xl mb-4 bg-zinc-900 text-emerald-200 border-2 border-emerald-700 focus:ring-2 focus:ring-emerald-400 focus:outline-none text-lg" value={answers[0] || ''} onChange={e => {
-              const newAnswers = [...answers];
-              newAnswers[0] = e.target.value;
-              setAnswers(newAnswers);
-            }} placeholder="Tu respuesta..." />
-            <div className="flex gap-4 mt-2 justify-center">
-              <button className="px-6 py-2 bg-gradient-to-r from-emerald-600 to-emerald-800 hover:from-emerald-700 hover:to-emerald-900 transition text-white rounded-full font-bold text-lg shadow" onClick={async () => {
-                // Cuando el usuario responde la primera pregunta, genera el resto usando SOLO la respuesta de lenguaje
-                const restQuestions = await generateQuestions('', answers[0]);
-                setQuestions([questions[0], ...restQuestions]);
-                setCurrentQuestion(1);
-              }}>Siguiente</button>
-            </div>
-          </div>
-        </div>
-      );
+  };
+
+  const getLevelText = (level: string) => {
+    switch (level) {
+      case 'ADVANCED':
+        return 'Avanzado';
+      case 'INTERMEDIATE':
+        return 'Intermedio';
+      case 'BEGINNER':
+        return 'Principiante';
+      default:
+        return level;
     }
-    // Si estamos en las siguientes preguntas
-    if (questions.length > 0 && currentQuestion > 0 && currentQuestion < questions.length) {
-      return (
-        <div className="p-4 max-w-xl mx-auto bg-gradient-to-br from-zinc-900 via-emerald-900 to-black rounded-3xl shadow-2xl border-2 border-emerald-700 animate-fade-in">
-          <div className="flex items-center gap-3 mb-4">
-            <FaRobot className="text-indigo-400 text-3xl animate-bounce" />
-            <h2 className="text-2xl font-extrabold text-emerald-300 drop-shadow">Test de nivel: {tech}</h2>
-          </div>
-          <div className="bg-zinc-800/80 rounded-xl p-4 mb-4">
-            <p className="text-emerald-200 mb-2 text-lg font-semibold">Pregunta {currentQuestion + 1} de {questions.length}</p>
-            <p className="text-emerald-100 mb-4 font-semibold text-xl">{questions[currentQuestion]}</p>
-            <textarea className="w-full p-3 rounded-xl mb-4 bg-zinc-900 text-emerald-200 border-2 border-emerald-700 focus:ring-2 focus:ring-emerald-400 focus:outline-none text-lg" value={answers[currentQuestion] || ''} onChange={e => {
-              const newAnswers = [...answers];
-              newAnswers[currentQuestion] = e.target.value;
-              setAnswers(newAnswers);
-            }} placeholder="Tu respuesta..." />
-            <div className="flex gap-4 mt-2 justify-center">
-              {currentQuestion > 1 && <button className="px-6 py-2 bg-zinc-700 hover:bg-zinc-800 transition text-emerald-200 rounded-full font-bold text-lg shadow" onClick={() => setCurrentQuestion(currentQuestion - 1)}>Anterior</button>}
-              <button className="px-6 py-2 bg-gradient-to-r from-emerald-600 to-emerald-800 hover:from-emerald-700 hover:to-emerald-900 transition text-white rounded-full font-bold text-lg shadow" onClick={async () => {
-                if (currentQuestion < questions.length - 1) setCurrentQuestion(currentQuestion + 1);
-                else setLevelResult(await evaluateLevel(answers, tech));
-              }}>{currentQuestion < questions.length - 1 ? 'Siguiente' : 'Finalizar'}</button>
-            </div>
-          </div>
-        </div>
-      );
-    }
+  };
+
+  if (showAssessment) {
+    return (
+      <SkillAssessment
+        onComplete={() => {
+          setShowAssessment(false);
+          // Recargar evaluaciones después de completar
+          getUserEvaluations().then(setUserEvaluations).catch(console.error);
+        }}
+      />
+    );
   }
 
-  if (loading || loadingProjects) return <div className="p-4">Cargando...</div>;
-  if (error) return <div className="p-4 text-red-500">{error}</div>;
-  if (!projects || projects.length === 0) {
+  if (loading) {
     return (
-      <div className="p-4">
-        <div className="text-white">No hay proyectos disponibles. Necesitas crear un proyecto primero o Únete a un proyecto para ver las tareas asignadas</div>
+      <div className="flex items-center justify-center min-h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
-  // Filtrar tareas para mostrar solo las asignadas al usuario actual, si 'user' y 'task.assignee' están disponibles y son comparables.
-  // Esto es un ejemplo, la estructura de 'task.assignee' y 'user' debe ser conocida.
-  // Si 'tasks' ya viene filtrado desde el hook useTasks para el usuario actual, este filtro no es necesario aquí.
-  // Asumiendo que task.assignee.id y user.id existen para la comparación.
-  const assignedTasks = user ? tasks.filter(task => task.assignee && task.assignee.id === user.id) : tasks;
-  // Si quieres mostrar TODAS las tareas del proyecto sin filtrar por asignado (como parece ser el comportamiento original),
-  // simplemente usa 'tasks' directamente: const assignedTasks = tasks;
-
-  const handleStatusChange = (taskId: number, newStatus: string) => {
-    // Convierte el string a los valores permitidos por UpdateTaskData
-    if (["PENDING", "IN_PROGRESS", "COMPLETED"].includes(newStatus)) {
-      updateTask(taskId, { status: newStatus as "PENDING" | "IN_PROGRESS" | "COMPLETED" });
-    }
-  };
+  if (error) {
+    return (
+      <div className="p-8 text-center text-red-500">
+        Error: {error}
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-extrabold text-white mb-6">Tus Tareas</h1>
-      <button className="mb-4 px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-800 hover:from-emerald-700 hover:to-emerald-900 transition text-white rounded-full shadow-lg font-bold text-lg tracking-wide" onClick={() => setShowLevelForm(true)}>
-        Realizar test de nivel IA
-      </button>
-      {/* Lista de tareas */}
-      <div className="space-y-4">
-        {assignedTasks.map((task) => (
-          <div
-            key={task.id}
-            className="p-4 border rounded-lg shadow-sm bg-zinc-900 border-zinc-700" // Estilo actualizado para mejor contraste
-          >
-            {/* Sección de edición de título ELIMINADA */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-lg text-white">{task.title}</h3>
-                {task.assignee && (
-                  <p className="text-sm text-gray-400">
-                    Asignado a: {task.assignee.name || 'No asignado'}
-                  </p>
-                )}
-                {task.project && (
-                  <p className="text-sm text-gray-400">
-                    Proyecto: {task.project.name || 'Sin proyecto'}
-                  </p>
-                )}
-                 {task.description && ( // Mostrar descripción si existe
-                  <p className="text-sm text-gray-300 mt-1">
-                    Descripción: {task.description}
-                  </p>
-                )}
+    <div className="p-6 max-w-6xl mx-auto">
+      {/* Header con notificaciones */}
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            Mis Tareas
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Gestiona tus tareas asignadas y tu progreso
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          {/* Botón de notificaciones */}
+          <div className="relative">
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="relative p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              <FaBell size={20} />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+            
+            {/* Dropdown de notificaciones */}
+            {showNotifications && (
+              <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-gray-200 dark:border-zinc-700 z-50">
+                <div className="p-4 border-b border-gray-200 dark:border-zinc-700">
+                  <h3 className="font-semibold text-gray-900 dark:text-white">Notificaciones</h3>
+                </div>
+                <div className="max-h-64 overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+                      No hay notificaciones
+                    </div>
+                  ) : (
+                    notifications.slice(0, 5).map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={`p-4 border-b border-gray-100 dark:border-zinc-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-700 ${
+                          !notification.read ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                        }`}
+                        onClick={() => markAsRead(notification.id)}
+                      >
+                        <h4 className="font-medium text-gray-900 dark:text-white text-sm">
+                          {notification.title}
+                        </h4>
+                        <p className="text-gray-600 dark:text-gray-400 text-xs mt-1">
+                          {notification.message}
+                        </p>
+                        <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
+                          {new Date(notification.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <select
-                  value={task.status}
-                  onChange={(e) => handleStatusChange(task.id, e.target.value)}
-                  className="p-2 border rounded-xl bg-zinc-700 text-white border-zinc-600 focus:ring-blue-500 focus:border-blue-500"
-                  aria-label={`Estado de la tarea ${task.title}`}
-                >
-                  <option value="PENDING">Pendiente</option>
-                  <option value="IN_PROGRESS">En Progreso</option>
-                  <option value="COMPLETED">Completada</option>
-                </select>
-                {/* Botón Editar ELIMINADO */}
-                {/* Botón Eliminar ELIMINADO */}
-              </div>
-            </div>
+            )}
           </div>
-        ))}
+
+          {/* Botón para nueva evaluación */}
+          <button
+            onClick={() => setShowAssessment(true)}
+            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
+          >
+            Nueva Evaluación
+          </button>
+        </div>
+      </div>
+
+      {/* Evaluaciones del usuario */}
+      {userEvaluations.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+            Mis Habilidades Evaluadas
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {userEvaluations.map((evaluation) => (
+              <div key={evaluation.id} className="bg-white dark:bg-zinc-800 p-4 rounded-lg border border-gray-200 dark:border-zinc-700">
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                  {evaluation.technology}
+                </h3>
+                <div className={`inline-block px-2 py-1 rounded-full text-xs font-medium mb-2 ${getLevelColor(evaluation.level)}`}>
+                  {getLevelText(evaluation.level)}
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Puntuación: {evaluation.score}/100
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                  {new Date(evaluation.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Lista de tareas */}
+      <div className="bg-white dark:bg-zinc-800 rounded-lg shadow">
+        <div className="p-6 border-b border-gray-200 dark:border-zinc-700">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            Tareas Asignadas ({tasks.length})
+          </h2>
+        </div>
+
+        <div className="divide-y divide-gray-200 dark:divide-zinc-700">
+          {tasks.length === 0 ? (
+            <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+              No tienes tareas asignadas aún
+            </div>
+          ) : (
+            tasks.map((task) => (
+              <div key={task.id} className="p-6 hover:bg-gray-50 dark:hover:bg-zinc-700/50 transition-colors">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {task.title}
+                      </h3>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(task.status)}`}>
+                        {getStatusText(task.status)}
+                      </span>
+                    </div>
+
+                    {task.description && (
+                      <p className="text-gray-600 dark:text-gray-400 mb-3">
+                        {task.description}
+                      </p>
+                    )}
+
+                    <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                      <span>Proyecto: {task.project?.name}</span>
+                      <span>Creada: {new Date(task.createdAt).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 ml-4">
+                    {task.status === 'PENDING' && (
+                      <button
+                        onClick={() => handleMarkTaskInProgress(task.id)}
+                        className="flex items-center gap-1 px-3 py-1 text-xs bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors"
+                      >
+                        <FaPlay size={10} />
+                        Iniciar
+                      </button>
+                    )}
+                    
+                    {task.status === 'IN_PROGRESS' && (
+                      <button
+                        onClick={() => handleMarkTaskComplete(task.id)}
+                        className="flex items-center gap-1 px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                      >
+                        <FaCheckCircle size={12} />
+                        Completar
+                      </button>
+                    )}
+
+                    {task.status === 'COMPLETED' && (
+                      <span className="flex items-center gap-1 px-3 py-1 text-xs bg-green-100 text-green-700 rounded">
+                        <FaCheckCircle size={12} />
+                        Completada
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

@@ -36,6 +36,15 @@ export interface UpdateTaskData {
   assigneeId?: number;
 }
 
+export interface TaskDistributionResult {
+  message: string;
+  assignments: {
+    task: Task;
+    reason: string;
+  }[];
+  criteria: string;
+}
+
 export const tasksApi = {
   getAll: async (userId?: number): Promise<Task[]> => {
     const { data } = await axios.get('/tasks', {
@@ -57,9 +66,15 @@ export const tasksApi = {
   update: async (id: number, taskData: UpdateTaskData): Promise<Task> => {
     const { data } = await axios.patch(`/tasks/${id}`, taskData);
     return data;
+  },  delete: async (id: number): Promise<void> => {
+    await axios.delete(`/tasks/${id}`);
   },
 
-  delete: async (id: number): Promise<void> => {
-    await axios.delete(`/tasks/${id}`);
+  distributeWithAI: async (projectId: number, criteria?: string): Promise<TaskDistributionResult> => {
+    const { data } = await axios.post('/tasks/distribute', {
+      projectId,
+      criteria: criteria || 'skills and workload'
+    });
+    return data;
   },
 };

@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto, UpdateTaskDto } from './dto/task.dto';
+import { DistributeTasksDto } from './dto/distribute-tasks.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('tasks')
@@ -41,9 +42,17 @@ export class TasksController {
   ) {
     return this.tasksService.update(req.user.userId, +id, updateTaskDto);
   }
-
   @Delete(':id')
   remove(@Request() req, @Param('id') id: string) {
     return this.tasksService.remove(req.user.userId, +id);
   }
-} 
+
+  @Post('distribute')
+  distributeTasksWithAI(@Request() req, @Body() distributeTasksDto: DistributeTasksDto) {
+    return this.tasksService.distributeTasksWithAI(
+      req.user.userId,
+      distributeTasksDto.projectId,
+      distributeTasksDto.criteria,
+    );
+  }
+}

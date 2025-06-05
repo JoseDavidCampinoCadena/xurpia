@@ -16,6 +16,10 @@ export const projectsApi = {
     const { data } = await axios.patch(`/projects/${id}`, projectData);
     return data;
   },
+  getById: async (id: number): Promise<Project> => {
+    const { data } = await axios.get(`/projects/${id}`);
+    return data;
+  },
 
   delete: async (id: number): Promise<void> => {
     await axios.delete(`/projects/${id}`);

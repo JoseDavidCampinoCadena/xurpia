@@ -16,6 +16,11 @@ export interface Project {
   updatedAt: string;
   collaborators?: any[];
   tasks?: any[];
+  owner?: {
+    id: number;
+    name: string;
+    email: string;
+  };
 }
 
 export const useProjects = () => {

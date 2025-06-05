@@ -12,6 +12,11 @@ interface User {
   profileImage?: string;
   cvUrl?: string;
   gender?: string;
+  profession?: string;
+  nationality?: string;
+  age?: number;
+  languages?: string[];
+  projectsCount?: number;
 }
 
 export const useAuth = () => {
