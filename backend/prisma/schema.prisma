@@ -21,6 +21,8 @@ model User {
   description    String?        // Nueva descripción opcional del usuario
   profileImage   String?
   cvUrl          String?
+  membershipType MembershipType @default(FREE) // Tipo de membresía
+  membershipExpiresAt DateTime?  // Fecha de expiración de la membresía premium
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   tasks          Task[]         @relation("AssignedTasks")
@@ -53,6 +55,7 @@ model Project {
   owner         User           @relation("ProjectOwner", fields: [ownerId], references: [id])
   tasks         Task[]         @relation("ProjectTasks")
   collaborators Collaborator[] @relation("ProjectCollaborators")
+  evaluations   UserEvaluation[] @relation("ProjectEvaluations") // Evaluaciones del proyecto
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
@@ -143,17 +146,28 @@ model UserEvaluation {
   id           Int      @id @default(autoincrement())
   userId       Int
   user         User     @relation("UserEvaluations", fields: [userId], references: [id])
+  projectId    Int      // Añadimos relación con proyecto
+  project      Project  @relation("ProjectEvaluations", fields: [projectId], references: [id], onDelete: Cascade)
   profession   String   // e.g., "Frontend"
   technology   String   // e.g., "JavaScript"
   level        String   // BEGINNER, INTERMEDIATE, ADVANCED
   score        Int      // Score from 0-100
+  feedback     String   // Feedback message for the user
   questionsData String  // JSON with questions and answers
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  @@unique([userId, projectId, technology]) // Solo una evaluación por usuario/proyecto/tecnología
 }
 
 enum TaskStatus {
   PENDING
   IN_PROGRESS
   COMPLETED
+}
+
+enum MembershipType {
+  FREE
+  PRO
+  ENTERPRISE
 }

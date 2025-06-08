@@ -31,18 +31,19 @@ class EvaluationsAPI {
     });
     return response.data;
   }
-
   async submitEvaluation(
     profession: string,
     technology: string,
     questions: Question[],
-    userAnswers: number[]
+    userAnswers: number[],
+    projectId?: number
   ): Promise<EvaluationResult> {
     const response = await axios.post('/evaluations/submit', {
       profession,
       technology,
       questions,
       userAnswers,
+      projectId,
     });
     return response.data;
   }

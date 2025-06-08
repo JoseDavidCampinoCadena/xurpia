@@ -83,13 +83,13 @@ Topics to cover for ${technology}:
       }
       return fallbackQuestions;
     }
-  }
-  async evaluateAnswers(
+  }  async evaluateAnswers(
     userId: number,
     profession: string,
     technology: string,
     questions: Question[],
     userAnswers: number[],
+    projectId?: number,
   ): Promise<EvaluationResult> {
     try {
       console.log('🔍 Starting evaluation for user:', userId);
@@ -106,6 +106,75 @@ Topics to cover for ${technology}:
 
       if (!userAnswers || !Array.isArray(userAnswers) || userAnswers.length !== questions.length) {
         throw new Error(`Invalid userAnswers array. Expected ${questions.length} answers, got ${userAnswers?.length}`);
+      }      // 🔐 MEMBERSHIP VALIDATION - Check user's membership and evaluation limits
+      console.log('🔐 Checking membership limits...');      // Get user with membership info
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          projects: true,
+          collaborations: {
+            include: {
+              project: true
+            }
+          }
+        }
+      }) as any;
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      // Get all projects user has access to
+      const userProjects = [
+        ...user.projects,
+        ...user.collaborations.map(c => c.project)
+      ];
+
+      if (userProjects.length === 0) {
+        throw new Error('Usuario debe pertenecer a al menos un proyecto para realizar evaluaciones');
+      }
+
+      // Determine which project to use
+      let targetProjectId: number;
+      
+      if (projectId) {
+        // Verify user has access to the specified project
+        const hasAccess = userProjects.some(p => p.id === projectId);
+        if (!hasAccess) {
+          throw new Error('No tienes acceso a este proyecto');
+        }
+        targetProjectId = projectId;
+      } else {
+        // Use the first project as default if no projectId provided
+        targetProjectId = userProjects[0].id;
+      }
+
+      console.log(`📋 Using project ID: ${targetProjectId}`);      // Check existing evaluations for this user, project, and technology
+      const existingEvaluations = await this.prisma.userEvaluation.count({
+        where: {
+          userId: userId,
+          projectId: targetProjectId,
+          technology: technology
+        } as any
+      });// Define membership limits
+      const membershipLimits = {
+        FREE: 1,
+        PRO: 3,
+        ENTERPRISE: Infinity
+      };
+
+      const userLimit = membershipLimits[user.membershipType] || 1;
+
+      console.log(`👤 User membership: ${user.membershipType}, Limit: ${userLimit}, Current: ${existingEvaluations}`);
+
+      if (existingEvaluations >= userLimit) {
+        const upgradeMessage = user.membershipType === 'FREE' 
+          ? 'Usuarios FREE pueden realizar 1 evaluación por tecnología por proyecto. Actualiza a PRO para 3 evaluaciones.'
+          : user.membershipType === 'PRO'
+          ? 'Usuarios PRO pueden realizar 3 evaluaciones por tecnología por proyecto. Actualiza a ENTERPRISE para evaluaciones ilimitadas.'
+          : 'Has alcanzado el límite de evaluaciones para esta tecnología en este proyecto.';
+        
+        throw new Error(`Límite de evaluaciones alcanzado. ${upgradeMessage}`);
       }
 
       let score = 0;
@@ -151,15 +220,15 @@ Topics to cover for ${technology}:
         feedback = `Conocimiento básico en ${technology}. Continúa aprendiendo los fundamentos.`;
       }
 
-      console.log('🎯 Final evaluation:', { level, score, feedback });
-
-      // Prepare data for database
+      console.log('🎯 Final evaluation:', { level, score, feedback });      // Prepare data for database
       const evaluationData = {
         userId,
+        projectId: targetProjectId, // Use the determined project ID
         profession,
         technology,
         level,
         score,
+        feedback,
         questionsData: JSON.stringify({
           questions,
           userAnswers,

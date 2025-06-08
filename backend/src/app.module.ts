@@ -12,6 +12,7 @@ import { MessagesModule } from './messages/messages.module';
 import { AiModule } from './AI/ai.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { EvaluationsModule } from './evaluations/evaluations.module';
+import { MembershipModule } from './membership/membership.module';
 
 @Module({
   imports: [
@@ -26,10 +27,10 @@ import { EvaluationsModule } from './evaluations/evaluations.module';
     CollaboratorsModule,
     NotesModule,
     UsersModule,
-    MessagesModule,
-    AiModule,
+    MessagesModule,    AiModule,
     NotificationsModule,
     EvaluationsModule,
+    MembershipModule,
   ],
 })
 export class AppModule {}

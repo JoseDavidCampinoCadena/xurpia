@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { evaluationsApi, Question, EvaluationResult, UserEvaluation } from '../api/evaluations.api';
 
 export const useEvaluations = () => {
@@ -43,17 +43,17 @@ export const useEvaluations = () => {
       setLoading(false);
     }
   };
-
   const submitEvaluation = async (
     profession: string,
     technology: string,
     questions: Question[],
-    userAnswers: number[]
+    userAnswers: number[],
+    projectId?: number
   ): Promise<EvaluationResult> => {
     try {
       setLoading(true);
       setError(null);
-      const result = await evaluationsApi.submitEvaluation(profession, technology, questions, userAnswers);
+      const result = await evaluationsApi.submitEvaluation(profession, technology, questions, userAnswers, projectId);
       return result;
     } catch (err: unknown) {
       setError('Error al enviar la evaluación');
@@ -63,8 +63,7 @@ export const useEvaluations = () => {
       setLoading(false);
     }
   };
-
-  const getUserEvaluations = async (): Promise<UserEvaluation[]> => {
+  const getUserEvaluations = useCallback(async (): Promise<UserEvaluation[]> => {
     try {
       setLoading(true);
       setError(null);
@@ -77,7 +76,7 @@ export const useEvaluations = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   return {
     loading,

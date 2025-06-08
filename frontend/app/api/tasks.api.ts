@@ -5,26 +5,26 @@ export interface Task {
   title: string;
   description?: string;
   status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
-  projectId?: number | null; // AHORA es opcional
-  assigneeId: number;
+  projectId?: number | null;
+  assigneeId?: number | null; // Now optional since tasks can be unassigned
   createdAt: string;
   updatedAt: string;
-  assignee: {
+  assignee?: {
     id: number;
     name: string;
     email: string;
-  };
+  } | null; // Now optional since tasks can be unassigned
   project?: {
     id: number;
     name: string;
-  } | null; // AHORA es opcional
+  } | null;
 }
 
 export interface CreateTaskData {
   title: string;
   description?: string;
-  assigneeId: number;
-  projectId?: number; // Opcional en creación
+  assigneeId?: number; // Now optional for unassigned tasks
+  projectId?: number;
   status?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
 }
 

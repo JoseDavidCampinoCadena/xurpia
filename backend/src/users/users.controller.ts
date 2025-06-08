@@ -10,6 +10,7 @@ import {
   Query,
   UseInterceptors,
   UploadedFiles,
+  Request,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -23,11 +24,12 @@ import { RecommendUsersDto } from './dto/recommend-users.dto';
 import axios from 'axios';
 
 @Controller('users')
-@UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  // Specific routes MUST come before parameterized routes
   @Get()
+  @UseGuards(JwtAuthGuard)
   findAll() {
     return this.usersService.findAll();
   }
@@ -37,6 +39,76 @@ export class UsersController {
     return this.usersService.findByEmail(email);
   }
 
+  @Get('unique-fields')
+  async getUniqueFields() {
+    return this.usersService.getUniqueFields();
+  }
+
+  @Get('test-no-auth')
+  async testNoAuth() {
+    console.log('🔍 /users/test-no-auth ENDPOINT REACHED');
+    return { message: 'Test endpoint without auth reached successfully' };
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  async getCurrentUser(@Request() req) {
+    console.log('🔍 /users/me ENDPOINT REACHED');
+    console.log('🔍 /users/me - req.user:', req.user);
+    console.log('🔍 /users/me - req.user.userId:', req.user?.userId);
+    console.log('🔍 /users/me - req.user.id:', req.user?.id);
+    console.log('🔍 /users/me - typeof req.user?.userId:', typeof req.user?.userId);
+    console.log('🔍 /users/me - typeof req.user?.id:', typeof req.user?.id);
+    
+    const userId = req.user?.userId || req.user?.id;
+    console.log('🔍 /users/me - using userId:', userId);
+    
+    if (!userId) {
+      console.log('❌ /users/me - No user ID found');
+      throw new Error('User ID not found in request');
+    }
+    
+    console.log('🔍 /users/me - calling usersService.findOne with:', userId);
+    return this.usersService.findOne(userId);
+  }
+
+  @Post('recommend')
+  async recommendUsers(@Body() body: RecommendUsersDto) {
+    // Llama a OpenAI para recomendar usuarios
+    const prompt = `Dado el área de interés "${body.interest}", selecciona los IDs de usuario más adecuados de la siguiente lista de usuarios (en formato JSON). Devuelve solo un array de IDs, nada más.\nUsuarios: ${JSON.stringify(body.users)}\nIDs recomendados:`;
+    const openaiApiKey = process.env.OPENAI_API_KEY;
+    if (!openaiApiKey) throw new Error('OPENAI_API_KEY no configurada');
+    const response = await axios.post(
+      'https://api.openai.com/v1/chat/completions',
+      {
+        model: 'gpt-3.5-turbo',
+        messages: [
+          { role: 'system', content: 'Eres un asistente experto en selección de talento.' },
+          { role: 'user', content: prompt },
+        ],
+        max_tokens: 50,
+        temperature: 0.2,
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${openaiApiKey}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    // Extrae el array de IDs del resultado
+    const text = response.data.choices[0].message.content;
+    let ids: number[] = [];
+    try {
+      ids = JSON.parse(text);
+    } catch {
+      // fallback: intenta extraer números
+      ids = (text.match(/\d+/g) || []).map(Number);
+    }
+    return { recommendedUserIds: ids };
+  }
+
+  // Parameterized routes MUST come after specific routes
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(+id);
@@ -102,53 +174,11 @@ export class UsersController {
     console.log('PATCH /users/:id/profile updateData:', updateData);
     return this.usersService.update(+id, updateData);
   }
-
   @Patch(':id/password')
   async changePassword(
     @Param('id') id: string,
     @Body() body: ChangePasswordDto
   ) {
     return this.usersService.changePassword(+id, body);
-  }
-
-  @Post('recommend')
-  async recommendUsers(@Body() body: RecommendUsersDto) {
-    // Llama a OpenAI para recomendar usuarios
-    const prompt = `Dado el área de interés "${body.interest}", selecciona los IDs de usuario más adecuados de la siguiente lista de usuarios (en formato JSON). Devuelve solo un array de IDs, nada más.\nUsuarios: ${JSON.stringify(body.users)}\nIDs recomendados:`;
-    const openaiApiKey = process.env.OPENAI_API_KEY;
-    if (!openaiApiKey) throw new Error('OPENAI_API_KEY no configurada');
-    const response = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
-      {
-        model: 'gpt-3.5-turbo',
-        messages: [
-          { role: 'system', content: 'Eres un asistente experto en selección de talento.' },
-          { role: 'user', content: prompt },
-        ],
-        max_tokens: 50,
-        temperature: 0.2,
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${openaiApiKey}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-    // Extrae el array de IDs del resultado
-    const text = response.data.choices[0].message.content;
-    let ids: number[] = [];
-    try {
-      ids = JSON.parse(text);
-    } catch {
-      // fallback: intenta extraer números
-      ids = (text.match(/\d+/g) || []).map(Number);
-    }
-    return { recommendedUserIds: ids };
-  }
-
-  @Get('unique-fields')
-  async getUniqueFields() {
-    return this.usersService.getUniqueFields();
   }
 }

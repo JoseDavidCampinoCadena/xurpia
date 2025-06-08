@@ -154,12 +154,11 @@ export default function TasksPage() {
                         {task.description}
                       </p>
                     )}
-                    
-                    <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                       <div className="flex items-center gap-1">
                         <span className="font-medium">Asignado a:</span>
                         <span className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-1 rounded">
-                          {task.assignee.name}
+                          {task.assignee?.name || 'Sin asignar'}
                         </span>
                       </div>
                       <div className="flex items-center gap-1">

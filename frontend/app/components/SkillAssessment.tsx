@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useEvaluations } from '../hooks/useEvaluations';
+import { useMembership } from '../hooks/useMembership';
+import { useProjects } from '../hooks/useProjects';
 import { Question, EvaluationResult } from '../api/evaluations.api';
 
 const TECHNOLOGIES = {
@@ -22,24 +24,49 @@ interface SkillAssessmentProps {
 export default function SkillAssessment({ onComplete }: SkillAssessmentProps) {
   const { user } = useAuth();
   const { generateQuestions, submitEvaluation, loading, error } = useEvaluations();
+  const { canCreateEvaluation, membershipInfo, loading: membershipLoading, upgradeMembership } = useMembership();
+  const { projects, loading: projectsLoading } = useProjects();
   
-  const [step, setStep] = useState<'confirm' | 'technology' | 'questions' | 'result'>('confirm');
+  const [step, setStep] = useState<'confirm' | 'technology' | 'questions' | 'result' | 'upgrade'>('confirm');
   const [profession, setProfession] = useState<string>('');
   const [technology, setTechnology] = useState<string>('');
+  const [selectedProject, setSelectedProject] = useState<number | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [userAnswers, setUserAnswers] = useState<number[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [result, setResult] = useState<EvaluationResult | null>(null);
   const [timeLeft, setTimeLeft] = useState(120); // 2 minutos en segundos
-  const handleSubmitEvaluation = useCallback(async () => {
+  const [membershipError, setMembershipError] = useState<string | null>(null);
+  const [upgradeLoading, setUpgradeLoading] = useState(false);
+
+  const handleUpgrade = async (membershipType: 'PRO' | 'ENTERPRISE') => {
     try {
-      const evaluationResult = await submitEvaluation(profession, technology, questions, userAnswers);
+      setUpgradeLoading(true);
+      await upgradeMembership(membershipType);
+      // After successful upgrade, redirect back to technology selection
+      setStep('technology');
+      setMembershipError(null);
+    } catch (err) {
+      setMembershipError('Error al actualizar membresía. Intenta nuevamente.');
+      console.error('Error upgrading membership:', err);
+    } finally {
+      setUpgradeLoading(false);
+    }
+  };  const handleSubmitEvaluation = useCallback(async () => {
+    try {
+      const evaluationResult = await submitEvaluation(
+        profession, 
+        technology, 
+        questions, 
+        userAnswers, 
+        selectedProject || undefined
+      );
       setResult(evaluationResult);
       setStep('result');
     } catch (err) {
       console.error('Error submitting evaluation:', err);
     }
-  }, [submitEvaluation, profession, technology, questions, userAnswers]);
+  }, [submitEvaluation, profession, technology, questions, userAnswers, selectedProject]);
 
   useEffect(() => {
     if (user?.profession) {
@@ -73,7 +100,29 @@ export default function SkillAssessment({ onComplete }: SkillAssessmentProps) {
     }
   };  const handleTechnologySelect = async (selectedTechnology: string) => {
     setTechnology(selectedTechnology);
+    setMembershipError(null);
+    
+    // Get user's projects for evaluation limits
+    if (projects.length === 0) {
+      setMembershipError('No tienes proyectos disponibles. Crea un proyecto primero.');
+      return;
+    }
+    
+    // For now, use the first project. In the future, we might want to let users select
+    const projectToUse = projects[0];
+    setSelectedProject(projectToUse.id);
+    
     try {
+      // Check membership limits before generating questions
+      const membershipCheck = await canCreateEvaluation(projectToUse.id, selectedTechnology);
+      
+      if (!membershipCheck.canCreate) {
+        setMembershipError(membershipCheck.reason || 'Has alcanzado el límite de evaluaciones para tu plan actual.');
+        setStep('upgrade');
+        return;
+      }
+      
+      // Generate questions if membership allows it
       const generatedQuestions = await generateQuestions(profession, selectedTechnology);
       setQuestions(generatedQuestions);
       setUserAnswers(new Array(generatedQuestions.length).fill(-1));
@@ -131,13 +180,16 @@ export default function SkillAssessment({ onComplete }: SkillAssessmentProps) {
         return level;
     }
   };
-
-  if (loading) {
+  if (loading || membershipLoading || projectsLoading) {
     return (
       <div className="flex items-center justify-center min-h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p>Generando evaluación...</p>
+          <p>
+            {loading ? 'Generando evaluación...' : 
+             membershipLoading ? 'Verificando membresía...' :
+             'Cargando proyectos...'}
+          </p>
         </div>
       </div>
     );
@@ -290,9 +342,7 @@ export default function SkillAssessment({ onComplete }: SkillAssessmentProps) {
               </button>
             </div>
           </div>
-        )}
-
-        {step === 'result' && result && (
+        )}        {step === 'result' && result && (
           <div className="text-center">
             <h2 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
               ¡Evaluación Completada!
@@ -328,7 +378,82 @@ export default function SkillAssessment({ onComplete }: SkillAssessmentProps) {
               Continuar a Tareas
             </button>
           </div>
-        )}        {error && (
+        )}
+
+        {step === 'upgrade' && (
+          <div className="text-center">
+            <h2 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
+              Límite de Evaluaciones Alcanzado
+            </h2>
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-6 rounded-lg mb-6 border border-yellow-200 dark:border-yellow-800">
+              <div className="flex items-center justify-center mb-4">
+                <svg className="h-12 w-12 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+                {membershipError}
+              </h3>
+              <div className="mb-6">
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
+                  Tu plan actual: <strong>{membershipInfo?.type || 'FREE'}</strong>
+                </p>
+                <p className="text-gray-600 dark:text-gray-300">
+                  Límite de evaluaciones por proyecto: <strong>{membershipInfo?.evaluationLimits.perProject || 1}</strong>
+                </p>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div className="border-2 border-blue-500 rounded-lg p-6 bg-blue-50 dark:bg-blue-900/20">
+                <h4 className="text-xl font-bold mb-2 text-blue-600 dark:text-blue-400">Plan PRO</h4>
+                <p className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">$30,000 COP/mes</p>
+                <ul className="text-left text-gray-600 dark:text-gray-300 mb-4 space-y-1">
+                  <li>• 3 evaluaciones por proyecto</li>
+                  <li>• Análisis detallado</li>
+                  <li>• Soporte prioritario</li>
+                </ul>                <button 
+                  onClick={() => handleUpgrade('PRO')}
+                  disabled={upgradeLoading}
+                  className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {upgradeLoading ? 'Procesando...' : 'Actualizar a PRO'}
+                </button>
+              </div>
+
+              <div className="border-2 border-purple-500 rounded-lg p-6 bg-purple-50 dark:bg-purple-900/20">
+                <h4 className="text-xl font-bold mb-2 text-purple-600 dark:text-purple-400">Plan ENTERPRISE</h4>
+                <p className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">$120,000 COP/mes</p>
+                <ul className="text-left text-gray-600 dark:text-gray-300 mb-4 space-y-1">
+                  <li>• Evaluaciones ilimitadas</li>
+                  <li>• Reportes avanzados</li>
+                  <li>• Soporte 24/7</li>
+                </ul>                <button 
+                  onClick={() => handleUpgrade('ENTERPRISE')}
+                  disabled={upgradeLoading}
+                  className="w-full bg-purple-500 text-white py-2 px-4 rounded-md hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {upgradeLoading ? 'Procesando...' : 'Actualizar a ENTERPRISE'}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex gap-4 justify-center">
+              <button
+                onClick={() => setStep('technology')}
+                className="px-6 py-2 border border-gray-300 dark:border-zinc-600 rounded-md hover:bg-gray-50 dark:hover:bg-zinc-700 text-gray-900 dark:text-white"
+              >
+                Volver
+              </button>
+              <button
+                onClick={() => window.location.href = '/membership'}
+                className="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+              >
+                Ver Planes Completos
+              </button>
+            </div>
+          </div>
+        )}        {(error || membershipError) && step !== 'upgrade' && (
           <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
             <div className="flex items-start">
               <div className="flex-shrink-0">
@@ -338,16 +463,28 @@ export default function SkillAssessment({ onComplete }: SkillAssessmentProps) {
               </div>
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
-                  Error al generar la evaluación
+                  {membershipError ? 'Error de membresía' : 'Error al generar la evaluación'}
                 </h3>
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>
-                {step === 'technology' && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {membershipError || error}
+                </p>
+                {step === 'technology' && !membershipError && (
                   <div className="mt-3">
                     <button
                       onClick={() => handleTechnologySelect(technology)}
                       className="text-sm bg-red-100 hover:bg-red-200 dark:bg-red-800 dark:hover:bg-red-700 text-red-800 dark:text-red-200 px-3 py-1 rounded-md transition-colors"
                     >
                       Reintentar
+                    </button>
+                  </div>
+                )}
+                {membershipError && membershipError.includes('proyectos') && (
+                  <div className="mt-3">
+                    <button
+                      onClick={() => window.location.href = '/projects'}
+                      className="text-sm bg-blue-100 hover:bg-blue-200 dark:bg-blue-800 dark:hover:bg-blue-700 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-md transition-colors"
+                    >
+                      Crear Proyecto
                     </button>
                   </div>
                 )}

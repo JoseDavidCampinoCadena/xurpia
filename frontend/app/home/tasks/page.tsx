@@ -1,49 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useTasks } from '@/app/hooks/useTasks';
-import { useAuth } from '@/app/hooks/useAuth';
-import { useEvaluations } from '@/app/hooks/useEvaluations';
-import { useNotifications } from '@/app/hooks/useNotifications';
-import SkillAssessment from '@/app/components/SkillAssessment';
-import { FaBell, FaCheckCircle, FaPlay } from 'react-icons/fa';
+import { FaCheckCircle, FaPlay } from 'react-icons/fa';
 
 export default function TasksPage() {
-  const { tasks, loading, error, updateTask } = useTasks();
-  const { user } = useAuth();
-  const { getUserEvaluations } = useEvaluations();
-  const { notifications, unreadCount, markAsRead } = useNotifications();
-  
-  const [showAssessment, setShowAssessment] = useState(false);
-  const [userEvaluations, setUserEvaluations] = useState<Array<{
-    id: number;
-    profession: string;
-    technology: string;
-    level: string;
-    score: number;
-    createdAt: string;
-  }>>([]);
-  const [showNotifications, setShowNotifications] = useState(false);
-
-  useEffect(() => {
-    const loadUserEvaluations = async () => {
-      try {
-        const evaluations = await getUserEvaluations();
-        setUserEvaluations(evaluations);
-          // Si el usuario no tiene evaluaciones, mostrar la evaluación
-        if (evaluations.length === 0) {
-          setShowAssessment(true);
-        }
-      } catch (err) {
-        console.error('Error loading evaluations:', err);
-      }
-    };
-
-    if (user) {
-      loadUserEvaluations();
-    }
-  }, [user, getUserEvaluations]);
-  const handleMarkTaskComplete = async (taskId: number) => {
+  const { tasks, loading, error, updateTask } = useTasks();  const handleMarkTaskComplete = async (taskId: number) => {
     try {
       await updateTask(taskId, { status: 'COMPLETED' });
     } catch (err) {
@@ -84,45 +46,6 @@ export default function TasksPage() {
         return status;
     }
   };
-
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case 'ADVANCED':
-        return 'text-green-600 bg-green-100';
-      case 'INTERMEDIATE':
-        return 'text-yellow-600 bg-yellow-100';
-      case 'BEGINNER':
-        return 'text-blue-600 bg-blue-100';
-      default:
-        return 'text-gray-600 bg-gray-100';
-    }
-  };
-
-  const getLevelText = (level: string) => {
-    switch (level) {
-      case 'ADVANCED':
-        return 'Avanzado';
-      case 'INTERMEDIATE':
-        return 'Intermedio';
-      case 'BEGINNER':
-        return 'Principiante';
-      default:
-        return level;
-    }
-  };
-
-  if (showAssessment) {
-    return (
-      <SkillAssessment
-        onComplete={() => {
-          setShowAssessment(false);
-          // Recargar evaluaciones después de completar
-          getUserEvaluations().then(setUserEvaluations).catch(console.error);
-        }}
-      />
-    );
-  }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-64">
@@ -140,8 +63,7 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      {/* Header con notificaciones */}
+    <div className="p-6 max-w-6xl mx-auto">      {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -149,97 +71,8 @@ export default function TasksPage() {
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
             Gestiona tus tareas asignadas y tu progreso
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          {/* Botón de notificaciones */}
-          <div className="relative">
-            <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="relative p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              <FaBell size={20} />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {unreadCount}
-                </span>
-              )}
-            </button>
-            
-            {/* Dropdown de notificaciones */}
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-gray-200 dark:border-zinc-700 z-50">
-                <div className="p-4 border-b border-gray-200 dark:border-zinc-700">
-                  <h3 className="font-semibold text-gray-900 dark:text-white">Notificaciones</h3>
-                </div>
-                <div className="max-h-64 overflow-y-auto">
-                  {notifications.length === 0 ? (
-                    <div className="p-4 text-center text-gray-500 dark:text-gray-400">
-                      No hay notificaciones
-                    </div>
-                  ) : (
-                    notifications.slice(0, 5).map((notification) => (
-                      <div
-                        key={notification.id}
-                        className={`p-4 border-b border-gray-100 dark:border-zinc-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-700 ${
-                          !notification.read ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                        }`}
-                        onClick={() => markAsRead(notification.id)}
-                      >
-                        <h4 className="font-medium text-gray-900 dark:text-white text-sm">
-                          {notification.title}
-                        </h4>
-                        <p className="text-gray-600 dark:text-gray-400 text-xs mt-1">
-                          {notification.message}
-                        </p>
-                        <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
-                          {new Date(notification.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Botón para nueva evaluación */}
-          <button
-            onClick={() => setShowAssessment(true)}
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
-          >
-            Nueva Evaluación
-          </button>
-        </div>
+          </p>        </div>
       </div>
-
-      {/* Evaluaciones del usuario */}
-      {userEvaluations.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
-            Mis Habilidades Evaluadas
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {userEvaluations.map((evaluation) => (
-              <div key={evaluation.id} className="bg-white dark:bg-zinc-800 p-4 rounded-lg border border-gray-200 dark:border-zinc-700">
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                  {evaluation.technology}
-                </h3>
-                <div className={`inline-block px-2 py-1 rounded-full text-xs font-medium mb-2 ${getLevelColor(evaluation.level)}`}>
-                  {getLevelText(evaluation.level)}
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Puntuación: {evaluation.score}/100
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                  {new Date(evaluation.createdAt).toLocaleDateString()}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Lista de tareas */}
       <div className="bg-white dark:bg-zinc-800 rounded-lg shadow">

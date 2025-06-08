@@ -29,8 +29,7 @@ export class EvaluationsController {
       }
       throw new HttpException('Failed to generate questions', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-  }
-  @Post('submit')
+  }  @Post('submit')
   async submitEvaluation(
     @GetUser() user: any,
     @Body() body: {
@@ -38,6 +37,7 @@ export class EvaluationsController {
       technology: string;
       questions: Question[];
       userAnswers: number[];
+      projectId?: number;
     },
   ): Promise<EvaluationResult> {
     try {
@@ -46,7 +46,8 @@ export class EvaluationsController {
         profession: body.profession,
         technology: body.technology,
         questionsCount: body.questions?.length,
-        answersCount: body.userAnswers?.length
+        answersCount: body.userAnswers?.length,
+        projectId: body.projectId
       });
 
       if (!user || !user.id) {
@@ -63,15 +64,14 @@ export class EvaluationsController {
 
       if (!body.userAnswers || !Array.isArray(body.userAnswers)) {
         throw new Error('Invalid or missing userAnswers array');
-      }
-
-      const result = await this.evaluationsService.evaluateAnswers(
+      }      const result = await this.evaluationsService.evaluateAnswers(
         user.id,
         body.profession,
         body.technology,
         body.questions,
         body.userAnswers,
-      );      console.log('✅ Evaluation completed successfully for user:', user.id);
+        body.projectId,
+      );console.log('✅ Evaluation completed successfully for user:', user.id);
       return result;
     } catch (error) {
       console.error('❌ Error in submitEvaluation controller:', error);

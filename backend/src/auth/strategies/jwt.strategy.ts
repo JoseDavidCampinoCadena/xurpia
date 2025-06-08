@@ -10,10 +10,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: configService.get('JWT_SECRET'),
-    });
-  }
+    });  }
+
   async validate(payload: any) {
-    // Return id as id to match the expected user object structure
-    return { id: payload.userId };
+    console.log('🔍 JWT Strategy - payload:', payload);
+    // Return userId to match the expected user object structure across controllers
+    const user = { userId: payload.userId, id: payload.userId };
+    console.log('🔍 JWT Strategy - returning user:', user);
+    return user;
   }
 }
