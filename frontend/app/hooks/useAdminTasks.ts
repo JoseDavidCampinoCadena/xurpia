@@ -5,19 +5,27 @@ import { tasksApi, Task, CreateTaskData, UpdateTaskData } from '../api/tasks.api
 import { useAuth } from './useAuth';
 import { useProjects } from './useProjects';
 
-export const useTasks = () => {
+export const useAdminTasks = (projectId?: number) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
-  const { projects, loading: loadingProjects } = useProjects();  const fetchTasks = useCallback(async () => {
+  const { projects, loading: loadingProjects } = useProjects();
+
+  const fetchTasks = useCallback(async () => {
     if (!user) return;
     
     try {
       setLoading(true);
-      // For personal task views, only get tasks assigned to the user
-      const data = await tasksApi.getAll(user.id, true);
-      setTasks(data);
+      // Get ALL tasks (don't pass userId to get all tasks instead of user-specific ones)
+      const data = await tasksApi.getAll();
+      
+      // If projectId is provided, filter tasks by project
+      const filteredTasks = projectId 
+        ? data.filter(task => task.projectId === projectId)
+        : data;
+      
+      setTasks(filteredTasks);
       setError(null);
     } catch (err) {
       setError('Error al cargar las tareas');
@@ -25,7 +33,7 @@ export const useTasks = () => {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, projectId]);
 
   const createTask = async (taskData: Partial<CreateTaskData>) => {
     if (!user) {
@@ -43,18 +51,21 @@ export const useTasks = () => {
       throw new Error('No hay proyectos disponibles');
     }
 
-    const projectId = taskData.projectId || projects[0].id;    try {
+    const finalProjectId = taskData.projectId || projectId || projects[0].id;
+
+    try {
       const newTask = await tasksApi.create({
         title: taskData.title || '',
         description: taskData.description,
-        projectId,
+        projectId: finalProjectId,
         assigneeId: taskData.assigneeId || user.id, // Use the provided assigneeId or fallback to current user
         status: taskData.status || 'PENDING'
       });
       
       setTasks(prev => [...prev, newTask]);
       setError(null);
-      return newTask;    } catch (err) {
+      return newTask;
+    } catch (err) {
       const errorMessage = err instanceof Error 
         ? err.message 
         : (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Error al crear la tarea';
@@ -62,6 +73,7 @@ export const useTasks = () => {
       throw new Error(errorMessage);
     }
   };
+
   const updateTask = async (id: number, taskData: UpdateTaskData) => {
     if (!user) {
       setError('Usuario no autenticado');
@@ -80,7 +92,8 @@ export const useTasks = () => {
         task.id === id ? updatedTask : task
       ));
       setError(null);
-      return updatedTask;    } catch (err) {
+      return updatedTask;
+    } catch (err) {
       const errorMessage = err instanceof Error 
         ? err.message 
         : (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Error al actualizar la tarea';
@@ -88,6 +101,7 @@ export const useTasks = () => {
       throw new Error(errorMessage);
     }
   };
+
   const deleteTask = async (id: number) => {
     if (!user) {
       setError('Usuario no autenticado');
@@ -103,7 +117,8 @@ export const useTasks = () => {
     try {
       await tasksApi.delete(id);
       setTasks(prev => prev.filter(task => task.id !== id));
-      setError(null);    } catch (err) {
+      setError(null);
+    } catch (err) {
       const errorMessage = err instanceof Error 
         ? err.message 
         : (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Error al eliminar la tarea';
@@ -111,6 +126,7 @@ export const useTasks = () => {
       throw new Error(errorMessage);
     }
   };
+
   useEffect(() => {
     if (user && !loadingProjects) {
       fetchTasks();
@@ -126,4 +142,4 @@ export const useTasks = () => {
     deleteTask,
     refreshTasks: fetchTasks,
   };
-}; 
+};

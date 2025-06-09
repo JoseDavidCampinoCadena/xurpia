@@ -12,114 +12,16 @@ interface Event {
   type: 'meeting' | 'deadline' | 'other';
 }
 
-interface QuickEventModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  selectedDate: string;
-  onSave: (event: Omit<Event, 'id'>) => void;
-}
-
-const QuickEventModal = ({ isOpen, onClose, selectedDate, onSave }: QuickEventModalProps) => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [type, setType] = useState<Event['type']>('other');
-
-  if (!isOpen) return null;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave({
-      title,
-      description,
-      date: selectedDate,
-      type
-    });
-    setTitle('');
-    setDescription('');
-    setType('other');
-    onClose();
-  };
-
-  return (
-    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-zinc-800 rounded-lg p-4 w-full max-w-md">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-white">
-            Agregar evento para {selectedDate}
-          </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
-            <FaTimes />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-gray-400 mb-2">Título</label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Título del evento"
-              className="w-full bg-zinc-900 text-white px-4 py-2 rounded-md"
-              autoFocus
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-400 mb-2">Descripción</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Descripción del evento"
-              className="w-full bg-zinc-900 text-white px-4 py-2 rounded-md resize-none"
-              rows={3}
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-400 mb-2">Tipo</label>
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value as Event['type'])}
-              className="w-full bg-zinc-900 text-white px-4 py-2 rounded-md"
-            >
-              <option value="meeting">Reunión</option>
-              <option value="deadline">Fecha límite</option>
-              <option value="other">Otro</option>
-            </select>
-          </div>
-
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-zinc-700 text-white rounded-md hover:bg-zinc-600"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
-            >
-              Guardar
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
-
 interface DayEventsModalProps {
   isOpen: boolean;
   onClose: () => void;
   date: string;
   events: Event[];
   onAddEvent: (event: Omit<Event, 'id'>) => void;
+  canCreateEvents: boolean;
 }
 
-const DayEventsModal = ({ isOpen, onClose, date, events, onAddEvent }: DayEventsModalProps) => {
+const DayEventsModal = ({ isOpen, onClose, date, events, onAddEvent, canCreateEvents }: DayEventsModalProps) => {
   const { theme } = useTheme();
   const [isAddingEvent, setIsAddingEvent] = useState(false);
   const [newEvent, setNewEvent] = useState({
@@ -138,10 +40,10 @@ const DayEventsModal = ({ isOpen, onClose, date, events, onAddEvent }: DayEvents
     });
     setNewEvent({ title: '', description: '', type: 'other' });
     setIsAddingEvent(false);
-  };
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
+  };  const formatDate = (dateStr: string) => {
+    // Parse the date string manually to avoid timezone issues
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day); // month is 0-indexed
     return date.toLocaleDateString('es-ES', { 
       weekday: 'long', 
       year: 'numeric', 
@@ -175,17 +77,18 @@ const DayEventsModal = ({ isOpen, onClose, date, events, onAddEvent }: DayEvents
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Lista de eventos existentes */}
-          <div>
-            <div className="flex justify-between items-center mb-4">
+          <div>            <div className="flex justify-between items-center mb-4">
               <h4 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                 Eventos del día
               </h4>
-              <button
-                onClick={() => setIsAddingEvent(true)}
-                className="bg-green-500 text-white px-3 py-1.5 rounded-md hover:bg-green-600 text-sm font-medium"
-              >
-                + Nuevo Evento
-              </button>
+              {canCreateEvents && (
+                <button
+                  onClick={() => setIsAddingEvent(true)}
+                  className="bg-green-500 text-white px-3 py-1.5 rounded-md hover:bg-green-600 text-sm font-medium"
+                >
+                  + Nuevo Evento
+                </button>
+              )}
             </div>
             
             {events.length === 0 ? (
@@ -218,10 +121,8 @@ const DayEventsModal = ({ isOpen, onClose, date, events, onAddEvent }: DayEvents
                 ))}
               </div>
             )}
-          </div>
-
-          {/* Formulario para nuevo evento */}
-          {isAddingEvent && (
+          </div>          {/* Formulario para nuevo evento */}
+          {isAddingEvent && canCreateEvents && (
             <div className={`rounded-lg p-4 ${theme === 'dark' ? 'bg-zinc-900' : 'bg-gray-50'}`}>
               <h4 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                 Nuevo Evento
@@ -300,10 +201,20 @@ const DayEventsModal = ({ isOpen, onClose, date, events, onAddEvent }: DayEvents
   );
 };
 
-export default function Calendar() {
+interface CalendarProps {
+  events?: Event[];
+  onEventCreate?: (event: Omit<Event, 'id'>) => void;
+  canCreateEvents?: boolean;
+}
+
+export default function Calendar({ 
+  events = [], 
+  onEventCreate,
+  canCreateEvents = true 
+}: CalendarProps) {
   const { theme } = useTheme();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [events, setEvents] = useState<Event[]>([
+  const [localEvents, setLocalEvents] = useState<Event[]>([
     {
       id: 1,
       title: 'Reunión de equipo',
@@ -321,6 +232,9 @@ export default function Calendar() {
   ]);
   const [isQuickEventModalOpen, setIsQuickEventModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
+
+  // Use external events if provided, otherwise use local state
+  const displayEvents = events.length > 0 ? events : localEvents;
 
   const daysInMonth = new Date(
     currentDate.getFullYear(),
@@ -345,11 +259,11 @@ export default function Calendar() {
 
   const nextMonth = () => {
     setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + 1)));
-  };
-
-  const getEventForDay = (day: number) => {
-    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return events.find(event => event.date === dateStr);
+  };  const getEventForDay = (day: number) => {
+    // Use the same date formatting method as handleDayClick to ensure consistency
+    const clickedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    const dateStr = clickedDate.toISOString().split('T')[0];
+    return displayEvents.find(event => event.date === dateStr);
   };
 
   const getEventColor = (type: string) => {
@@ -361,16 +275,19 @@ export default function Calendar() {
       default:
         return theme === 'dark' ? 'bg-green-400' : 'bg-green-500';
     }
-  };
-
-  const handleDayClick = (day: number) => {
-    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  };  const handleDayClick = (day: number) => {
+    // Create date using local timezone to avoid timezone offset issues
+    const clickedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    const dateStr = clickedDate.toISOString().split('T')[0]; // This ensures YYYY-MM-DD format without timezone issues
     setSelectedDate(dateStr);
     setIsQuickEventModalOpen(true);
   };
-
   const handleQuickEventSave = (newEvent: Omit<Event, 'id'>) => {
-    setEvents(prev => [...prev, { ...newEvent, id: Date.now() }]);
+    if (onEventCreate) {
+      onEventCreate(newEvent);
+    } else {
+      setLocalEvents(prev => [...prev, { ...newEvent, id: Date.now() }]);
+    }
   };
 
   return (
@@ -412,20 +329,20 @@ export default function Calendar() {
         
         {Array.from({ length: firstDayOfMonth }).map((_, index) => (
           <div key={`empty-${index}`} className="aspect-square"></div>
-        ))}
-
-        {Array.from({ length: daysInMonth }).map((_, index) => {
+        ))}        {Array.from({ length: daysInMonth }).map((_, index) => {
           const day = index + 1;
           const event = getEventForDay(day);
           
           return (
             <div
               key={day}
-              onClick={() => handleDayClick(day)}
-              className={`aspect-square rounded-lg flex flex-col items-center justify-center relative cursor-pointer transition-colors ${
+              onClick={() => canCreateEvents ? handleDayClick(day) : undefined}
+              className={`aspect-square rounded-lg flex flex-col items-center justify-center relative transition-colors ${
+                canCreateEvents ? 'cursor-pointer' : 'cursor-default'
+              } ${
                 theme === 'dark'
-                  ? 'bg-zinc-900 hover:bg-zinc-700'
-                  : 'bg-gray-50 hover:bg-gray-100'
+                  ? `bg-zinc-900 ${canCreateEvents ? 'hover:bg-zinc-700' : ''}`
+                  : `bg-gray-50 ${canCreateEvents ? 'hover:bg-gray-100' : ''}`
               }`}
             >
               <span className={theme === 'dark' ? 'text-white' : 'text-gray-900'}>
@@ -440,14 +357,13 @@ export default function Calendar() {
             </div>
           );
         })}
-      </div>
-
-      <DayEventsModal
+      </div>      <DayEventsModal
         isOpen={isQuickEventModalOpen}
         onClose={() => setIsQuickEventModalOpen(false)}
         date={selectedDate}
-        events={events.filter(event => event.date === selectedDate)}
+        events={displayEvents.filter(event => event.date === selectedDate)}
         onAddEvent={handleQuickEventSave}
+        canCreateEvents={canCreateEvents}
       />
     </div>
   );

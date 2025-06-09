@@ -1,6 +1,8 @@
+'use client';
+
 import './globals.css';
 import Image from 'next/image';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { FaCubes, FaTools, FaDatabase, FaLink, FaFacebookF, FaInstagram, FaTelegram, FaDiscord } from "react-icons/fa";
 import Link from 'next/link';
 
@@ -140,9 +142,13 @@ export default function HomePage() {
         <div className="bg-black p-8 rounded-2xl shadow-lg w-80 text-center border border-white">
           <h3 className="text-3xl font-semibold">Pro</h3>
           <p className="text-2xl font-bold mt-2 text-gray-300">30.000 COP/mes</p>
-          <button className="bg-green-500 text-white py-3 px-6 rounded-lg text-lg font-semibold mt-4 hover:bg-green-600 transition">
+
+          <Link href={"/login"}>
+              <button className="bg-green-500 text-white py-3 px-6 rounded-lg text-lg font-semibold mt-4 hover:bg-green-600 transition">
             Adquiere tu Plan
           </button>
+          </Link>
+          
           <ul className="mt-6 space-y-3 text-gray-400 text-lg">
             <li>✅ Todo lo incluido en la versión gratuita</li>
             <li>✅ Asistente de IA para mejores prácticas</li>
@@ -155,9 +161,13 @@ export default function HomePage() {
         <div className="bg-black p-8 rounded-2xl shadow-lg w-80 text-center border border-white">
           <h3 className="text-3xl font-semibold">Empresarial</h3>
           <p className="text-2xl font-bold mt-2 text-gray-300">120.000 COP/mes</p>
-          <button className="bg-green-500 text-white py-3 px-6 rounded-lg text-lg font-semibold mt-4 hover:bg-green-600 transition">
+
+          <Link href={"/login"}>
+              <button className="bg-green-500 text-white py-3 px-6 rounded-lg text-lg font-semibold mt-4 hover:bg-green-600 transition">
             Adquiere tu Plan
           </button>
+          </Link>
+          
           <ul className="mt-6 space-y-3 text-gray-400 text-lg">
             <li>✅ Todo lo incluido en la versión Pro</li>
             <li>✅ Herramientas avanzadas de análisis de datos</li>

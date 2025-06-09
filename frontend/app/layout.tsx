@@ -32,8 +32,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <title>Xurp Ia</title>
+        <title>Xurp IA</title>
+        <meta name="description" content="Plataforma avanzada de gestión de proyectos potenciada por inteligencia artificial" />
         <meta name="color-scheme" content="dark" />
+        {/* Favicons - forzar recarga */}
+        <link rel="icon" href="/favicon.svg?v=3" type="image/svg+xml" />
+        <link rel="icon" href="/favicon-16.svg?v=3" type="image/svg+xml" sizes="16x16" />
+        <link rel="icon" href="/favicon-64.svg?v=3" type="image/svg+xml" sizes="64x64" />
+        <link rel="shortcut icon" href="/favicon.svg?v=3" type="image/svg+xml" />
+        
+        {/* Apple Touch Icons */}
+        <link rel="apple-touch-icon" href="/apple-touch-icon.svg?v=3" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.svg?v=3" />
+        
+        {/* Manifest */}
+        <link rel="manifest" href="/manifest.json" />
+        
+        {/* Meta tags adicionales */}
+        <meta name="theme-color" content="#39ff14" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body suppressHydrationWarning>
         <ThemeProvider>

@@ -9,10 +9,11 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
-    "prisma:generate": "prisma generate",
+    "start:prod": "node dist/main",    "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "delete-users": "node scripts/delete-all-users.js",
+    "delete-users-ts": "npx ts-node scripts/delete-all-users.ts"
   },
   "keywords": [],
   "author": "",

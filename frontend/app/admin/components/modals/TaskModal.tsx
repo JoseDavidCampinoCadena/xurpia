@@ -54,7 +54,7 @@ export default function TaskModal({ isOpen, onClose, mode, task, onSubmit }: Tas
         title: task.title,
         description: task.description || '',
         projectId: task.projectId ?? projectIdFromUrl ?? 1,
-        assigneeId: task.assigneeId,
+        assigneeId: task.assigneeId ?? undefined,
         status: task.status
       });
     } else {

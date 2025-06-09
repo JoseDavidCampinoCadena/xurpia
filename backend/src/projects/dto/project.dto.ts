@@ -21,6 +21,10 @@ export class CreateProjectDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @IsString()
+  @IsOptional()
+  estimatedDuration?: string;
 }
 
 export class UpdateProjectDto {
@@ -44,4 +48,8 @@ export class UpdateProjectDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @IsString()
+  @IsOptional()
+  estimatedDuration?: string;
 }

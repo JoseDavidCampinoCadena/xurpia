@@ -46,10 +46,16 @@ export interface TaskDistributionResult {
 }
 
 export const tasksApi = {
-  getAll: async (userId?: number): Promise<Task[]> => {
-    const { data } = await axios.get('/tasks', {
-      params: { userId }
-    });
+  getAll: async (userId?: number, assignedOnly?: boolean): Promise<Task[]> => {
+    const params: Record<string, string | number> = {};
+    if (userId !== undefined) {
+      params.userId = userId;
+    }
+    if (assignedOnly) {
+      params.assignedOnly = 'true';
+    }
+    
+    const { data } = await axios.get('/tasks', { params });
     return data;
   },
 

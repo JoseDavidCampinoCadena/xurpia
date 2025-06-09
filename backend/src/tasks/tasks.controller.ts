@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Request,
+  Query,
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto, UpdateTaskDto } from './dto/task.dto';
@@ -21,10 +22,10 @@ export class TasksController {
   @Post()
   create(@Request() req, @Body() createTaskDto: CreateTaskDto) {
     return this.tasksService.create(req.user.id, createTaskDto);
-  }
-  @Get()
-  findAll(@Request() req) {
-    return this.tasksService.findAll(req.user.id);
+  }  @Get()
+  findAll(@Request() req, @Query('assignedOnly') assignedOnly?: string) {
+    const onlyAssigned = assignedOnly === 'true';
+    return this.tasksService.findAll(req.user.id, onlyAssigned);
   }
   @Get(':id')
   findOne(@Request() req, @Param('id') id: string) {

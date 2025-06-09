@@ -13,10 +13,6 @@ export class CreateEventDto {
   @IsOptional()
   @IsString()
   description?: string;
-
-  @IsNotEmpty()
-  @IsInt()
-  projectId: number;
 }
 
 export class UpdateEventDto {

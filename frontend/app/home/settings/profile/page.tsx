@@ -158,8 +158,8 @@ const ProfilePage = () => {
             className="flex flex-col gap-6"
           >            {/* Imagen de perfil mejorada */}
             <div className="flex flex-col items-center mb-8">
-              <div className="relative mb-4">
-                <div className="relative">
+              <div className="relative mb-4 group">
+                <div className="relative cursor-pointer" onClick={() => document.getElementById('profile-image-input')?.click()}>
                   {profileImagePreview ? (
                     <Image
                       src={profileImagePreview.startsWith('http') || profileImagePreview.startsWith('/uploads')
@@ -177,16 +177,10 @@ const ProfilePage = () => {
                       <FaUserCircle className="w-16 h-16 md:w-24 md:h-24 text-[#26D07C]" />
                     </div>
                   )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleProfileImageChange}
-                    className="absolute left-0 top-0 w-full h-full opacity-0 cursor-pointer"
-                    title="Cambiar foto"
-                  />
+                  
                   {/* Upload overlay */}
-                  <div className="absolute inset-0 rounded-full bg-black/0 hover:bg-black/30 transition-all duration-300 flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer">
-                    <div className="bg-[#26D07C] rounded-full p-3">
+                  <div className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer">
+                    <div className="bg-[#26D07C] rounded-full p-3 transform scale-0 group-hover:scale-100 transition-transform duration-300">
                       <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -194,12 +188,21 @@ const ProfilePage = () => {
                     </div>
                   </div>
                 </div>
+                
+                {/* Hidden file input */}
+                <input
+                  id="profile-image-input"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfileImageChange}
+                  className="hidden"
+                />
               </div>
               <div className="text-center">
                 <h3 className="text-xl font-bold text-white mb-1">Foto de Perfil</h3>
-                <p className="text-sm text-gray-400">Haz click en la imagen para cambiar tu foto</p>
+                <p className="text-sm text-gray-400">Haz clic en la imagen para cambiar tu foto</p>
               </div>
-            </div>            {/* Información personal - Grid Layout */}
+            </div>{/* Información personal - Grid Layout */}
             <div className="grid md:grid-cols-2 gap-6 mb-8">
               {/* Nombre */}
               <div className="space-y-2">
