@@ -15,7 +15,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { EvaluationsModule } from './evaluations/evaluations.module';
 import { MembershipModule } from './membership/membership.module';
 import { EventsModule } from './events/events.module';
-import { AdminModule } from './admin/admin.module';
+import { SkillAssessmentsModule } from './skill-assessments/skill-assessments.module';
 
 @Module({
   imports: [
@@ -35,7 +35,7 @@ import { AdminModule } from './admin/admin.module';
     AiTasksModule,    NotificationsModule,
     EvaluationsModule,
     MembershipModule,
-    AdminModule,
+    SkillAssessmentsModule,
   ],
 })
 export class AppModule {}

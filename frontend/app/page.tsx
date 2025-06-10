@@ -1,8 +1,6 @@
-'use client';
-
 import './globals.css';
 import Image from 'next/image';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { FaCubes, FaTools, FaDatabase, FaLink, FaFacebookF, FaInstagram, FaTelegram, FaDiscord } from "react-icons/fa";
 import Link from 'next/link';
 

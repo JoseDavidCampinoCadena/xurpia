@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FaTasks, FaUsers, FaCalendarAlt, FaChartLine, FaCog, FaHome, FaComment } from 'react-icons/fa';
+import { FaTasks, FaUsers, FaCalendarAlt, FaChartLine, FaCog, FaHome } from 'react-icons/fa';
 import { useTheme } from '@/app/contexts/ThemeContext';
 import { useEffect, useState } from 'react';
 import { projectsApi } from '@/app/api/projects.api'; // Asegúrate de que la ruta sea correcta
@@ -62,11 +62,6 @@ export default function AdminSidebar() {
       icon: <FaUsers className={`w-5 h-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
     },
     // Only show Chats if user has permission
-    ...(permissions.canViewChats ? [{
-      path: `/admin/projects/${currentProjectId}/chats`,
-      name: 'Chats',
-      icon: <FaComment className={`w-5 h-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
-    }] : []),
     // Always show Calendar (but restrict event creation in the calendar component)
     ...(permissions.canViewCalendar ? [{
       path: `/admin/projects/${currentProjectId}/calendar`,

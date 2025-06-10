@@ -11,9 +11,8 @@ export class ProjectsService {
     private prisma: PrismaService,
     private aiService: AiService,
     private aiTasksService: AiTasksService
-  ) {}
-  async create(userId: number, dto: CreateProjectDto) {
-    // Generar invitationCode único
+  ) {}  async create(userId: number, dto: CreateProjectDto) {
+    // Generate unique invitationCode
     let invitationCode: string;
     let isUnique = false;
     do {
@@ -22,32 +21,8 @@ export class ProjectsService {
       if (!existing) isUnique = true;
     } while (!isUnique);
 
-    // Perform AI analysis if description and duration are provided
-    let aiAnalysis = null;
-    let aiTimeline = null;
+    // Create project immediately without waiting for AI analysis
     let estimatedDuration = dto.estimatedDuration || '2 meses';
-    let totalAiTasks = 0;
-
-    if (dto.description && dto.description.trim()) {
-      try {
-        aiAnalysis = await this.aiService.analyzeProject(
-          dto.name,
-          dto.description,
-          estimatedDuration
-        );
-        
-        if (aiAnalysis && aiAnalysis.dailyTasksPlan) {
-          aiTimeline = JSON.stringify(aiAnalysis.dailyTasksPlan);
-          totalAiTasks = aiAnalysis.dailyTasksPlan.tasksPerDay?.reduce(
-            (total, day) => total + (day.tasks?.length || 0),
-            0
-          ) || 0;
-        }
-      } catch (error) {
-        console.error('Failed to analyze project with AI:', error);
-        // Continue with project creation even if AI analysis fails
-      }
-    }
 
     const project = await this.prisma.project.create({
       data: {
@@ -57,8 +32,8 @@ export class ProjectsService {
         lastConnection: dto.lastConnection ? new Date(dto.lastConnection) : new Date(),
         description: dto.description,
         estimatedDuration: estimatedDuration,
-        aiTimeline: aiTimeline,
-        totalAiTasks: totalAiTasks,
+        aiTimeline: null, // Will be updated asynchronously
+        totalAiTasks: 0, // Will be updated asynchronously
         completedAiTasks: 0,
         invitationCode,
         owner: { connect: { id: userId } },
@@ -91,14 +66,12 @@ export class ProjectsService {
       },
     });
 
-    // Generate AI tasks if analysis was successful
-    if (aiAnalysis && aiAnalysis.dailyTasksPlan && project.id) {
-      try {
-        await this.generateAiTasksFromAnalysis(project.id, aiAnalysis.dailyTasksPlan);
-      } catch (error) {
-        console.error('Failed to generate AI tasks:', error);
-        // Project is already created, just log the error
-      }
+    // Perform AI analysis asynchronously (don't await this)
+    if (dto.description && dto.description.trim()) {
+      this.performAsyncAIAnalysis(project.id, dto.name, dto.description, estimatedDuration)
+        .catch(error => {
+          console.error('Async AI analysis failed for project', project.id, ':', error);
+        });
     }
 
     return project;
@@ -184,10 +157,32 @@ export class ProjectsService {
 
     const isCollaborator = project.collaborators.some(
       (collab) => collab.userId === userId,
-    );
-
-    if (!isCollaborator && project.ownerId !== userId) {
+    );    if (!isCollaborator && project.ownerId !== userId) {
       throw new ForbiddenException('You do not have access to this project');
+    }
+
+    return project;
+  }
+
+  async getBasicInfo(userId: number, id: number) {
+    const project = await this.prisma.project.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        ownerId: true,
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
     }
 
     return project;
@@ -221,6 +216,42 @@ export class ProjectsService {
       await this.prisma.aITask.createMany({
         data: aiTasks,
       });
+    }
+  }
+
+  private async performAsyncAIAnalysis(projectId: number, projectName: string, description: string, estimatedDuration: string) {
+    try {
+      console.log(`Starting async AI analysis for project ${projectId}`);
+      
+      // Perform AI analysis (this was the synchronous operation causing timeouts)
+      const aiAnalysis = await this.aiService.analyzeProject(
+        projectName,
+        description,
+        estimatedDuration
+      );
+
+      // Update project with AI analysis results
+      if (aiAnalysis) {
+        await this.prisma.project.update({
+          where: { id: projectId },
+          data: {
+            aiTimeline: aiAnalysis.aiTimeline || null,
+            totalAiTasks: aiAnalysis.dailyTasksPlan?.tasksPerDay?.reduce(
+              (total: number, day: any) => total + (day.tasks?.length || 0), 
+              0
+            ) || 0,
+          },
+        });
+
+        // Generate AI tasks if analysis was successful
+        if (aiAnalysis.dailyTasksPlan) {
+          await this.generateAiTasksFromAnalysis(projectId, aiAnalysis.dailyTasksPlan);
+          console.log(`AI analysis completed successfully for project ${projectId}`);
+        }
+      }
+    } catch (error) {
+      console.error(`AI analysis failed for project ${projectId}:`, error);
+      // Don't throw error - project creation should succeed even if AI analysis fails
     }
   }
 

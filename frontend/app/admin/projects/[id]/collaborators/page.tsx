@@ -288,9 +288,10 @@ export default function CollaboratorsPage() {
                       {isCurrentUser && !isOwner && (
                         <div className="mt-4 flex justify-end">
                           <button
-                            className="text-xs text-yellow-600 dark:text-yellow-400  px-3 py-1 rounded-md border border-yellow-500 dark:border-yellow-400 "
+                            onClick={() => handleDeleteCollaborator(c.id)}
+                            className="text-xs text-yellow-600 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-300 px-3 py-1 rounded-md border border-yellow-500 dark:border-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900"
                           >
-                            Yo
+                            Salir del proyecto
                           </button>
                         </div>
                       )}

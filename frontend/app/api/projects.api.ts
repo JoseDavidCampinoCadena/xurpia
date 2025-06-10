@@ -15,9 +15,13 @@ export const projectsApi = {
   update: async (id: number, projectData: { name?: string; description?: string; logo?: string; location?: string; lastConnection?: string }): Promise<Project> => {
     const { data } = await axios.patch(`/projects/${id}`, projectData);
     return data;
-  },
-  getById: async (id: number): Promise<Project> => {
+  },  getById: async (id: number): Promise<Project> => {
     const { data } = await axios.get(`/projects/${id}`);
+    return data;
+  },
+
+  getBasicInfo: async (id: number): Promise<{ id: number; name: string; ownerId: number; owner: { id: number; name: string; email: string } }> => {
+    const { data } = await axios.get(`/projects/${id}/basic-info`);
     return data;
   },
 

@@ -2,36 +2,37 @@
 
 import { useState, useEffect } from 'react';
 import { useProjects } from '@/app/hooks/useProjects';
-import { useAuth } from '@/app/hooks/useAuth';
 import { FaUsers, FaProjectDiagram, FaTasks, FaBrain, FaChartLine } from 'react-icons/fa';
 import Link from 'next/link';
+import { Project } from '@/app/hooks/useProjects';
 
-export default function AdminDashboard() {
+interface AdminDashboardProps {
+  project?: Project | null;
+}
+
+export default function AdminDashboard({ project }: AdminDashboardProps) {
   const { projects } = useProjects();
-  const { user } = useAuth();
   const [stats, setStats] = useState({
     totalProjects: 0,
     totalCollaborators: 0,
     totalTasks: 0
   });
-  const currentProject = projects && projects.length > 0 ? projects[0] : null;
-  const currentProjectId = currentProject ? currentProject.id : null;
-  const isProjectOwner = currentProject && user ? currentProject.ownerId === user.id : false;
 
+  // Use the passed project or fall back to the first project
+  const currentProject = project || (projects && projects.length > 0 ? projects[0] : null);
+  const currentProjectId = currentProject ? currentProject.id : null;
   useEffect(() => {
     const calculateStats = async () => {
-      // Calcular estadísticas
+      // Calcular estadísticas del proyecto actual
       setStats({
         totalProjects: projects.length,
-        totalCollaborators: projects.reduce((acc, project) => 
-          acc + (project.collaborators?.length || 0), 0),
-        totalTasks: projects.reduce((acc, project) => 
-          acc + (project.tasks?.length || 0), 0)
+        totalCollaborators: currentProject?.collaborators?.length || 0,
+        totalTasks: currentProject?.tasks?.length || 0
       });
     };
 
     calculateStats();
-  }, [projects]);
+  }, [projects, currentProject]);
 
   return (
     <div className="p-8">
@@ -54,64 +55,52 @@ export default function AdminDashboard() {
               <p className="text-lg font-bold">{currentProject.name}</p>
             )}
           </div>
-        </div>
-        <div className="card p-6 flex items-center shadow-md bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
+        </div>        <div className="card p-6 flex items-center shadow-md bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
           <FaUsers className="text-4xl text-green-500 mr-4" />
           <div>
-            <h3 className="text-lg font-semibold">Colaboradores</h3>
+            <h3 className="text-lg font-semibold">Colaboradores del Proyecto</h3>
             <p className="text-2xl font-bold">{stats.totalCollaborators}</p>
           </div>
         </div>
         <div className="card p-6 flex items-center shadow-md bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
           <FaTasks className="text-4xl text-purple-500 mr-4" />
           <div>
-            <h3 className="text-lg font-semibold">Tareas</h3>
+            <h3 className="text-lg font-semibold">Tareas del Proyecto</h3>
             <p className="text-2xl font-bold">{stats.totalTasks}</p>
           </div>
         </div>
-      </div>   
-      
-      
-           {/* Acciones rápidas - Solo para propietarios del proyecto */}
-      {isProjectOwner && (
-        <div className="card p-6 mb-8 shadow-md bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
-          <h2 className="text-xl font-semibold mb-4">Acciones Rápidas</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 w-full">
-            <Link 
-              href={currentProjectId ? `/admin/projects/${currentProjectId}/collaborators` : '#'}
-              className={`btn-secondary p-4 rounded-lg text-center font-semibold hover:scale-[1.03] hover:opacity-90 transition-all duration-150${!currentProjectId ? ' opacity-50 pointer-events-none' : ''}`}
-            >
-              Gestionar Colaboradores
-            </Link>
-            <Link 
-              href={currentProjectId ? `/admin/projects/${currentProjectId}/tasks` : '#'}
-              className={`bg-purple-500 text-white p-4 rounded-lg text-center font-semibold hover:scale-[1.03] hover:opacity-90 transition-all duration-150${!currentProjectId ? ' opacity-50 pointer-events-none' : ''}`}
-            >
-              Gestionar Tareas
-            </Link>
-            <Link 
-              href={currentProjectId ? `/admin/projects/${currentProjectId}/ai-tasks` : '#'}
-              className={`bg-gradient-to-r from-purple-600 to-blue-600 text-white p-4 rounded-lg text-center font-semibold hover:scale-[1.03] hover:opacity-90 transition-all duration-150 flex items-center justify-center gap-2${!currentProjectId ? ' opacity-50 pointer-events-none' : ''}`}
-            >
-              <FaBrain className="w-4 h-4" />
-              Tareas IA
-            </Link>
-            <Link 
-              href={currentProjectId ? `/admin/projects/${currentProjectId}/progress` : '#'}
-              className={`bg-green-500 text-white p-4 rounded-lg text-center font-semibold hover:scale-[1.03] hover:opacity-90 transition-all duration-150 flex items-center justify-center gap-2${!currentProjectId ? ' opacity-50 pointer-events-none' : ''}`}
-            >
-              <FaChartLine className="w-4 h-4" />
-              Progreso
-            </Link>
-            <Link 
-              href={currentProjectId ? `/admin/projects/${currentProjectId}/calendar` : '#'}
-              className={`bg-yellow-500 text-white p-4 rounded-lg text-center font-semibold hover:scale-[1.03] hover:opacity-90 transition-all duration-150${!currentProjectId ? ' opacity-50 pointer-events-none' : ''}`}
-            >
-              Gestionar Calendario
-            </Link>
-          </div>
+      </div>      {/* Acciones rápidas */}
+      <div className="card p-6 mb-8 shadow-md bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
+        <h2 className="text-xl font-semibold mb-4">Acciones Rápidas</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 w-full">
+          <Link 
+            href={currentProjectId ? `/admin/projects/${currentProjectId}/collaborators` : '#'}
+            className={`btn-secondary p-4 rounded-lg text-center font-semibold hover:scale-[1.03] hover:opacity-90 transition-all duration-150${!currentProjectId ? ' opacity-50 pointer-events-none' : ''}`}
+          >
+            Gestionar Colaboradores
+          </Link>
+          <Link 
+            href={currentProjectId ? `/admin/projects/${currentProjectId}/ai-tasks` : '#'}
+            className={`bg-gradient-to-r from-purple-600 to-blue-600 text-white p-4 rounded-lg text-center font-semibold hover:scale-[1.03] hover:opacity-90 transition-all duration-150 flex items-center justify-center gap-2${!currentProjectId ? ' opacity-50 pointer-events-none' : ''}`}
+          >
+            <FaBrain className="w-4 h-4" />
+            Tareas IA
+          </Link>
+          <Link 
+            href={currentProjectId ? `/admin/projects/${currentProjectId}/progress` : '#'}
+            className={`bg-green-500 text-white p-4 rounded-lg text-center font-semibold hover:scale-[1.03] hover:opacity-90 transition-all duration-150 flex items-center justify-center gap-2${!currentProjectId ? ' opacity-50 pointer-events-none' : ''}`}
+          >
+            <FaChartLine className="w-4 h-4" />
+            Progreso
+          </Link>
+          <Link 
+            href={currentProjectId ? `/admin/projects/${currentProjectId}/calendar` : '#'}
+            className={`bg-yellow-500 text-white p-4 rounded-lg text-center font-semibold hover:scale-[1.03] hover:opacity-90 transition-all duration-150${!currentProjectId ? ' opacity-50 pointer-events-none' : ''}`}
+          >
+            Gestionar Calendario
+          </Link>
         </div>
-      )}
+      </div>
 
       {/* Actividad Reciente */}
      

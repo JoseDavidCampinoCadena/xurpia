@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { aiTasksApi, AITask } from '@/app/api/ai-tasks.api';
-import { skillAssessmentsApi, SkillAssessment } from '@/app/api/skill-assessments.api';
+import { skillAssessmentsApi, SkillAssessment, SkillQuestion } from '@/app/api/skill-assessments.api';
 import { 
   FaBrain, 
   FaRobot, 
@@ -56,7 +56,7 @@ export default function AITasksPage() {
   // New state for skill assessments
   const [activeTab, setActiveTab] = useState<'tasks' | 'assessments'>('tasks');
   const [assessments, setAssessments] = useState<SkillAssessment[]>([]);
-
+  const [assessmentQuestions, setAssessmentQuestions] = useState<SkillQuestion[]>([]);
   const [loadingAssessments, setLoadingAssessments] = useState(false);
 
   const loadAITasks = useCallback(async () => {
@@ -84,10 +84,11 @@ export default function AITasksPage() {
       setLoadingAssessments(false);
     }
   }, [projectId]);
+
   const loadAssessmentQuestions = useCallback(async () => {
     try {
-      // Assessment questions are managed by the backend service
-      console.log('Assessment questions loaded for project:', projectId);
+      const questions = await skillAssessmentsApi.getQuestions(projectId);
+      setAssessmentQuestions(questions);
     } catch (err) {
       console.error('Error loading assessment questions:', err);
     }

@@ -1,3 +1,9 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,58 +14,62 @@ datasource db {
 }
 
 model User {
-  id                  Int              @id @default(autoincrement())
-  email               String           @unique
-  password            String
-  name                String
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
-  description         String?
-  profileImage        String?
-  cvUrl               String?
-  gender              String?
-  age                 Int?
-  languages           String[]
-  nationality         String?
-  profession          String?
-  projectsCount       Int              @default(0)
-  membershipExpiresAt DateTime?
-  membershipType      MembershipType   @default(FREE)
-  aiTasks             AITask[]         @relation("AssignedAITasks")
-  collaborations      Collaborator[]   @relation("UserCollaborations")
-  Conversation        Conversation[]
-  personalEvents      Event[]          @relation("UserPersonalEvents")
-  sentMessages        Message[]        @relation("MessageFromUser")
-  receivedMessages    Message[]        @relation("MessageToUser")
-  notes               Note[]           @relation("UserNotes")
-  notifications       Notification[]   @relation("UserNotifications")
-  projects            Project[]        @relation("ProjectOwner")
-  tasks               Task[]           @relation("AssignedTasks")
-  evaluations         UserEvaluation[] @relation("UserEvaluations")
+  id             Int            @id @default(autoincrement())
+  email          String         @unique
+  password       String
+  name           String
+  description    String?        // Nueva descripción opcional del usuario
+  profileImage   String?
+  cvUrl          String?
+  membershipType MembershipType @default(FREE) // Tipo de membresía
+  membershipExpiresAt DateTime?  // Fecha de expiración de la membresía premium
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  tasks          Task[]         @relation("AssignedTasks")
+  aiTasks        AITask[]       @relation("AssignedAITasks") // AI-generated tasks
+  projects       Project[]      @relation("ProjectOwner")
+  collaborations Collaborator[] @relation("UserCollaborations")
+  Conversation   Conversation[]
+  notes          Note[]         @relation("UserNotes") // Explicit relation name
+  gender         String?
+  profession     String?
+  nationality    String?
+  age            Int?
+  languages      String[]
+  sentMessages   Message[] @relation("MessageFromUser")
+  receivedMessages Message[] @relation("MessageToUser")
+  projectsCount   Int            @default(0) // Number of projects the user is involved in
+  notifications  Notification[] @relation("UserNotifications")
+  evaluations    UserEvaluation[] @relation("UserEvaluations")
+  personalEvents Event[]        @relation("UserPersonalEvents")
+  skillAssessments SkillAssessment[] @relation("UserSkillAssessments")
 }
 
 model Project {
-  id                Int              @id @default(autoincrement())
-  name              String
-  description       String?
-  ownerId           Int
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
-  lastConnection    DateTime?
-  location          String?
-  logo              String
-  invitationCode    String?          @unique
-  aiSuggestions     String?
-  aiTimeline        String?
-  completedAiTasks  Int              @default(0)
-  estimatedDuration String?
-  totalAiTasks      Int              @default(0)
-  aiGeneratedTasks  AITask[]         @relation("ProjectAITasks")
-  collaborators     Collaborator[]   @relation("ProjectCollaborators")
-  events            Event[]
-  owner             User             @relation("ProjectOwner", fields: [ownerId], references: [id])
-  tasks             Task[]           @relation("ProjectTasks")
-  evaluations       UserEvaluation[] @relation("ProjectEvaluations")
+  id            Int            @id @default(autoincrement())
+  name          String
+  logo          String         // URL obligatoria del logo
+  location      String?
+  lastConnection DateTime?
+  invitationCode String?   @unique // Código de invitación único para el proyecto
+  events        Event[]
+  description   String?
+  ownerId       Int
+  owner         User           @relation("ProjectOwner", fields: [ownerId], references: [id])
+  tasks         Task[]         @relation("ProjectTasks")
+  collaborators Collaborator[] @relation("ProjectCollaborators")
+  evaluations   UserEvaluation[] @relation("ProjectEvaluations") // Evaluaciones del proyecto
+  // AI-based progress fields
+  aiSuggestions String?        // JSON with AI analysis
+  aiTimeline    String?        // JSON with AI-generated timeline and daily tasks
+  estimatedDuration String?    // Original duration estimate (e.g., "2 meses")
+  totalAiTasks  Int           @default(0) // Total AI-generated tasks for progress calculation
+  completedAiTasks Int        @default(0) // Completed AI-generated tasks
+  aiGeneratedTasks AITask[]   @relation("ProjectAITasks") // AI-generated tasks
+  skillQuestions SkillQuestion[] @relation("ProjectSkillQuestions")
+  skillAssessments SkillAssessment[] @relation("ProjectSkillAssessments")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model Task {
@@ -68,22 +78,22 @@ model Task {
   description String?
   status      TaskStatus @default(PENDING)
   projectId   Int
+  project     Project    @relation("ProjectTasks", fields: [projectId], references: [id], onDelete: Cascade)
   assigneeId  Int?
+  assignee    User?      @relation("AssignedTasks", fields: [assigneeId], references: [id])
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
-  assignee    User?      @relation("AssignedTasks", fields: [assigneeId], references: [id])
-  project     Project    @relation("ProjectTasks", fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model Collaborator {
   id        Int      @id @default(autoincrement())
   userId    Int
+  user      User     @relation("UserCollaborations", fields: [userId], references: [id])
   projectId Int
-  role      String   @default("MEMBER")
+  project   Project  @relation("ProjectCollaborators", fields: [projectId], references: [id], onDelete: Cascade)
+  role      String   @default("MEMBER") // ADMIN, MEMBER
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  project   Project  @relation("ProjectCollaborators", fields: [projectId], references: [id], onDelete: Cascade)
-  user      User     @relation("UserCollaborations", fields: [userId], references: [id])
 
   @@unique([userId, projectId])
 }
@@ -94,18 +104,18 @@ model Event {
   date        DateTime
   type        String
   description String?
-  projectId   Int?
+  projectId   Int?     // Made optional for personal events
+  project     Project? @relation(fields: [projectId], references: [id])
+  userId      Int?     // Added for personal events
+  user        User?    @relation("UserPersonalEvents", fields: [userId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  userId      Int?
-  project     Project? @relation(fields: [projectId], references: [id])
-  user        User?    @relation("UserPersonalEvents", fields: [userId], references: [id])
 }
 
 model Conversation {
   id        String   @id @default(uuid())
-  userId    Int
-  messages  Json
+  userId    Int // Relaciona con el usuario
+  messages  Json // Guarda los mensajes en formato JSON
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
 }
@@ -114,71 +124,71 @@ model Note {
   id        Int      @id @default(autoincrement())
   title     String
   content   String?
+  completed Boolean  @default(false) // Added completed field
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   userId    Int
-  completed Boolean  @default(false)
-  user      User     @relation("UserNotes", fields: [userId], references: [id])
+  user      User     @relation("UserNotes", fields: [userId], references: [id]) // Explicit relation name and fields
 
   @@index([userId])
 }
 
 model Message {
-  id         Int      @id @default(autoincrement())
-  fromUserId Int
-  toUserId   Int
-  content    String
-  createdAt  DateTime @default(now())
-  fromUser   User     @relation("MessageFromUser", fields: [fromUserId], references: [id])
-  toUser     User     @relation("MessageToUser", fields: [toUserId], references: [id])
+  id          Int      @id @default(autoincrement())
+  fromUserId  Int
+  toUserId    Int
+  content     String
+  createdAt   DateTime @default(now())
+  fromUser    User     @relation("MessageFromUser", fields: [fromUserId], references: [id])
+  toUser      User     @relation("MessageToUser", fields: [toUserId], references: [id])
 }
 
 model Notification {
   id        Int      @id @default(autoincrement())
   userId    Int
-  type      String
+  user      User     @relation("UserNotifications", fields: [userId], references: [id])
+  type      String   // TASK_ASSIGNMENT, PROJECT_UPDATE, etc.
   title     String
   message   String
-  data      String?
+  data      String?  // JSON data for additional info
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  user      User     @relation("UserNotifications", fields: [userId], references: [id])
 }
 
 model UserEvaluation {
-  id            Int      @id @default(autoincrement())
-  userId        Int
-  profession    String
-  technology    String
-  level         String
-  score         Int
-  questionsData String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  projectId     Int
-  feedback      String
-  project       Project  @relation("ProjectEvaluations", fields: [projectId], references: [id], onDelete: Cascade)
-  user          User     @relation("UserEvaluations", fields: [userId], references: [id])
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  user         User     @relation("UserEvaluations", fields: [userId], references: [id])
+  projectId    Int      // Añadimos relación con proyecto
+  project      Project  @relation("ProjectEvaluations", fields: [projectId], references: [id], onDelete: Cascade)
+  profession   String   // e.g., "Frontend"
+  technology   String   // e.g., "JavaScript"
+  level        String   // BEGINNER, INTERMEDIATE, ADVANCED
+  score        Int      // Score from 0-100
+  feedback     String   // Feedback message for the user
+  questionsData String  // JSON with questions and answers
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  @@unique([userId, projectId, technology])
+  @@unique([userId, projectId, technology]) // Solo una evaluación por usuario/proyecto/tecnología
 }
 
 model AITask {
-  id             Int        @id @default(autoincrement())
-  title          String
-  description    String?
-  skillLevel     String
-  estimatedHours Int        @default(8)
-  dayNumber      Int
-  status         TaskStatus @default(PENDING)
-  projectId      Int
-  assigneeId     Int?
-  completedAt    DateTime?
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-  assignee       User?      @relation("AssignedAITasks", fields: [assigneeId], references: [id])
-  project        Project    @relation("ProjectAITasks", fields: [projectId], references: [id], onDelete: Cascade)
+  id              Int           @id @default(autoincrement())
+  title           String
+  description     String?
+  skillLevel      String        // Principiante, Intermedio, Avanzado
+  estimatedHours  Int           @default(8) // Estimated hours to complete
+  dayNumber       Int           // Day number in the project timeline (1, 2, 3...)
+  status          TaskStatus    @default(PENDING)
+  projectId       Int
+  project         Project       @relation("ProjectAITasks", fields: [projectId], references: [id], onDelete: Cascade)
+  assigneeId      Int?
+  assignee        User?         @relation("AssignedAITasks", fields: [assigneeId], references: [id])
+  completedAt     DateTime?     // When the task was completed
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 }
 
 enum TaskStatus {
@@ -191,4 +201,41 @@ enum MembershipType {
   FREE
   PRO
   ENTERPRISE
+}
+
+// Skill Assessment Models
+model SkillQuestion {
+  id            Int               @id @default(autoincrement())
+  projectId     Int
+  project       Project           @relation("ProjectSkillQuestions", fields: [projectId], references: [id], onDelete: Cascade)
+  question      String
+  options       String[]          // Array of possible answers
+  correctAnswer Int               // Index of the correct answer (0-based)
+  difficulty    QuestionDifficulty
+  category      String
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  
+  @@map("skill_questions")
+}
+
+model SkillAssessment {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  user        User      @relation("UserSkillAssessments", fields: [userId], references: [id], onDelete: Cascade)
+  projectId   Int
+  project     Project   @relation("ProjectSkillAssessments", fields: [projectId], references: [id], onDelete: Cascade)
+  skillLevel  String    // "Principiante", "Intermedio", "Avanzado"
+  score       Int       // Percentage score (0-100)
+  answers     Json      // Stores the user's answers
+  completedAt DateTime  @default(now())
+  
+  @@unique([userId, projectId]) // One assessment per user per project
+  @@map("skill_assessments")
+}
+
+enum QuestionDifficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
 }

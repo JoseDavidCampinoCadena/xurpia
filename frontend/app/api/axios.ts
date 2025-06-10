@@ -9,7 +9,7 @@ const createAxiosInstance = (): AxiosInstance => {
     headers: {
       'Content-Type': 'application/json',
     },
-    timeout: 10000, // 10 segundos timeout
+    timeout: 60000, // 60 segundos timeout - increased for AI analysis
   });
 
   instance.interceptors.request.use(

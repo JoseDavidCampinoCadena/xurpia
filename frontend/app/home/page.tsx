@@ -1,53 +1,16 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import { useTheme } from '@/app/contexts/ThemeContext';
 import { useRouter } from 'next/navigation';
 
-import { useEffect, useState } from 'react';
 import { useProjects } from '@/app/hooks/useProjects';
-import { collaboratorsApi } from '@/app/api/collaborators.api';
 
 
 export default function Home() {
   const { theme } = useTheme();
   const { projects } = useProjects();
-  const { currentProjectId } = useProjects();
-  const [joinCode, setJoinCode] = useState('');
-  const [joinError, setJoinError] = useState('');
-  const [joinSuccess, setJoinSuccess] = useState('');
   const router = useRouter();
-  
-    useEffect(() => {
-      if (currentProjectId) {
-        refreshCollaborators();
-        fetchProjectCode();
-      }
-    }, [currentProjectId]);
-
-  const handleJoinWithCode = async () => {
-    setJoinError('');
-    setJoinSuccess('');
-    try {
-      if (!joinCode.trim()) {
-        setJoinError('Debes ingresar un código válido.');
-        return;
-      }
-      await collaboratorsApi.joinByCode(joinCode.trim());
-      setJoinSuccess('¡Te uniste correctamente al proyecto!');
-      setJoinCode('');
-      setTimeout(() => setJoinSuccess(''), 3000);
-    } catch (error: any) {
-      if (error?.response?.data?.message) {
-        setJoinError(error.response.data.message);
-      } else if (typeof error?.response?.data === 'string') {
-        setJoinError(error.response.data);
-      } else {
-        setJoinError('No se pudo unir al proyecto. Verifica el código o si ya eres colaborador.');
-      }
-    }
-  };
 
   return (
     <div className={`font-albert container mx-auto p-6 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
@@ -101,10 +64,11 @@ export default function Home() {
                 Crear Proyecto
               </button>
             </div>
-          </div>
-          <div className="space-y-6 mt-12">
+          </div>          <div className="space-y-6 mt-12">
             {projects.length > 0 ? (
-              projects.slice(0, 5).map((project) => (
+              projects.slice(0, 5).map((project) => {
+                console.log('Project data:', project); // Debug log
+                return (
                 <div key={project.id} className="dark:bg-zinc-800 rounded-xl p-6 flex flex-col md:flex-row items-start md:items-center gap-6 shadow-md">
                   {/* Logo */}
                   <img
@@ -125,7 +89,10 @@ export default function Home() {
                         <span className="text-gray-300 text-base">Cantidad de Integrantes : {project.collaborators?.length || 0}</span>
                       </div>
                       <button
-                        onClick={() => router.push(`/admin/projects/${project.id}`)}
+                        onClick={() => {
+                          console.log('Navigating to project ID:', project.id); // Debug log
+                          router.push(`/admin/projects/${project.id}`);
+                        }}
                         className="mt-4 md:mt-0 px-6 py-2 bg-zinc-700 text-white rounded-md hover:bg-zinc-900 transition"
                       >
                         Entrar
@@ -136,7 +103,8 @@ export default function Home() {
                     </p>
                   </div>
                 </div>
-              ))
+                );
+              })
             ) : (
               <p className="text-gray-600 dark:text-gray-400">No hay proyectos recientes.</p>
             )}

@@ -1,38 +1,36 @@
-export default function Icon() {
-  return (
-    <svg
-      width="32"
-      height="32"
-      viewBox="0 0 32 32"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <linearGradient id="greenGlow" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#00ff41"/>
-          <stop offset="50%" stopColor="#39ff14"/>
-          <stop offset="100%" stopColor="#00ff00"/>
-        </linearGradient>
-        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="1" result="coloredBlur"/>
-          <feMerge> 
-            <feMergeNode in="coloredBlur"/>
-            <feMergeNode in="SourceGraphic"/>
-          </feMerge>
-        </filter>
-      </defs>
-      
-      <rect width="32" height="32" rx="4" fill="#0a0a0a"/>
-      
-      <g filter="url(#glow)">
-        <path d="M6 6 L26 26" stroke="url(#greenGlow)" strokeWidth="4" strokeLinecap="round"/>
-        <path d="M26 6 L6 26" stroke="url(#greenGlow)" strokeWidth="4" strokeLinecap="round"/>
-      </g>
-      
-      <g opacity="0.6">
-        <path d="M6 6 L26 26" stroke="#39ff14" strokeWidth="6" strokeLinecap="round" opacity="0.3"/>
-        <path d="M26 6 L6 26" stroke="#39ff14" strokeWidth="6" strokeLinecap="round" opacity="0.3"/>
-      </g>
-    </svg>
-  )
-}
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Green fluorescent gradient -->
+    <linearGradient id="greenGlowIcon" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00ff41"/>
+      <stop offset="50%" style="stop-color:#39ff14"/>
+      <stop offset="100%" style="stop-color:#00ff00"/>
+    </linearGradient>
+    
+    <!-- Glow effect filter -->
+    <filter id="glowIcon" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Dark background for contrast -->
+  <rect width="32" height="32" rx="4" fill="#0a0a0a"/>
+  
+  <!-- Bold X letter with fluorescent green -->
+  <g filter="url(#glowIcon)">
+    <!-- First diagonal of X -->
+    <path d="M6 6 L26 26" stroke="url(#greenGlowIcon)" stroke-width="4" stroke-linecap="round"/>
+    <!-- Second diagonal of X -->
+    <path d="M26 6 L6 26" stroke="url(#greenGlowIcon)" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Additional glow effect -->
+  <g opacity="0.6">
+    <path d="M6 6 L26 26" stroke="#39ff14" stroke-width="6" stroke-linecap="round" opacity="0.3"/>
+    <path d="M26 6 L6 26" stroke="#39ff14" stroke-width="6" stroke-linecap="round" opacity="0.3"/>
+  </g>
+</svg>

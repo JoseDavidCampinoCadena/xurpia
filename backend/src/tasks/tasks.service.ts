@@ -80,7 +80,8 @@ export class TasksService {
     }
 
     return newTask;
-  }  async findAll(userId: number, assignedOnly: boolean = false) {
+  }
+  async findAll(userId: number, assignedOnly: boolean = false) {
     const whereCondition = assignedOnly 
       ? { assigneeId: userId } // Only tasks assigned to the user
       : {
@@ -103,8 +104,7 @@ export class TasksService {
           ],
         };
 
-    // Get regular tasks
-    const regularTasks = await this.prisma.task.findMany({
+    return this.prisma.task.findMany({
       where: whereCondition,
       include: {
         assignee: {
@@ -121,56 +121,7 @@ export class TasksService {
           },
         },
       },
-    });    // Get AI tasks assigned to the user (only when assignedOnly is true)
-    let aiTasks = [];
-    if (assignedOnly) {
-      const aiTasksData = await this.prisma.aITask.findMany({
-        where: {
-          assigneeId: userId,
-        },
-        include: {
-          assignee: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-          project: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-        },
-      });
-
-      // Transform AI tasks to match the regular task structure
-      aiTasks = aiTasksData.map(aiTask => ({
-        id: aiTask.id,
-        title: aiTask.title,
-        description: aiTask.description,
-        status: aiTask.status,
-        projectId: aiTask.projectId,
-        assigneeId: aiTask.assigneeId,
-        createdAt: aiTask.createdAt,
-        updatedAt: aiTask.updatedAt,
-        assignee: aiTask.assignee,
-        project: aiTask.project,
-        // Add AI-specific fields for identification
-        isAITask: true,
-        skillLevel: aiTask.skillLevel,
-        dayNumber: aiTask.dayNumber,
-        estimatedHours: aiTask.estimatedHours,
-      }));
-    }
-
-    // Combine and sort tasks by creation date
-    const allTasks = [...regularTasks, ...aiTasks].sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-
-    return allTasks;
+    });
   }
 
   async findOne(userId: number, id: number) {
