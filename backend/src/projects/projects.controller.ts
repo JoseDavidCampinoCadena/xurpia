@@ -27,14 +27,10 @@ export class ProjectsController {
   findAll(@Request() req) {
     return this.projectsService.findAll(req.user.userId);
   }
+
   @Get(':id')
   findOne(@Request() req, @Param('id') id: string) {
     return this.projectsService.findOne(req.user.userId, +id);
-  }
-
-  @Get(':id/basic-info')
-  getBasicInfo(@Request() req, @Param('id') id: string) {
-    return this.projectsService.getBasicInfo(req.user.userId, +id);
   }
 
   @Patch(':id')

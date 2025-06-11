@@ -21,18 +21,19 @@ export default function SkillAssessmentCheck({ children }: SkillAssessmentCheckP
   const [isProjectOwner, setIsProjectOwner] = useState(false);  const checkAssessment = useCallback(async () => {
     try {
       const projectId = parseInt(params.id as string);
-        // First, check if the current user is the project owner
+      
+      // First, check if the current user is the project owner
       if (user) {
         try {
-          const projectBasicInfo = await projectsApi.getBasicInfo(projectId);
-          if (projectBasicInfo.ownerId === user.id) {
+          const project = await projectsApi.getById(projectId);
+          if (project.ownerId === user.id) {
             console.log('User is project owner, skipping skill assessment');
             setIsProjectOwner(true);
             setHasAssessment(true); // Allow access without assessment
             return;
           }
         } catch (projectError) {
-          console.error('Error fetching project basic info:', projectError);
+          console.error('Error fetching project:', projectError);
           // Continue with assessment check if project fetch fails
         }
       }
@@ -66,14 +67,13 @@ export default function SkillAssessmentCheck({ children }: SkillAssessmentCheckP
   useEffect(() => {
     checkAssessment();
   }, [checkAssessment]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <FaSpinner className="animate-spin text-blue-400 w-8 h-8 mx-auto mb-4" />
-          <span className="text-white">
-            {isProjectOwner ? 'Verificando permisos del proyecto...' : 'Verificando evaluación de habilidades...'}
-          </span>
+          <span className="text-white">Verificando evaluación de habilidades...</span>
         </div>
       </div>
     );

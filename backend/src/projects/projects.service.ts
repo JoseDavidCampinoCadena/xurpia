@@ -157,32 +157,10 @@ export class ProjectsService {
 
     const isCollaborator = project.collaborators.some(
       (collab) => collab.userId === userId,
-    );    if (!isCollaborator && project.ownerId !== userId) {
+    );
+
+    if (!isCollaborator && project.ownerId !== userId) {
       throw new ForbiddenException('You do not have access to this project');
-    }
-
-    return project;
-  }
-
-  async getBasicInfo(userId: number, id: number) {
-    const project = await this.prisma.project.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        name: true,
-        ownerId: true,
-        owner: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
-    });
-
-    if (!project) {
-      throw new NotFoundException('Project not found');
     }
 
     return project;

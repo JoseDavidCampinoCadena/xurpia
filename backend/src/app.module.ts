@@ -11,6 +11,7 @@ import { UsersModule } from './users/users.module';
 import { MessagesModule } from './messages/messages.module';
 import { AiModule } from './AI/ai.module';
 import { AiTasksModule } from './ai-tasks/ai-tasks.module';
+import { AiConversationModule } from './ai-conversation/ai-conversation.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { EvaluationsModule } from './evaluations/evaluations.module';
 import { MembershipModule } from './membership/membership.module';
@@ -32,7 +33,9 @@ import { SkillAssessmentsModule } from './skill-assessments/skill-assessments.mo
     NotesModule,    UsersModule,
     MessagesModule,
     AiModule,
-    AiTasksModule,    NotificationsModule,
+    AiTasksModule,
+    AiConversationModule,
+    NotificationsModule,
     EvaluationsModule,
     MembershipModule,
     SkillAssessmentsModule,
