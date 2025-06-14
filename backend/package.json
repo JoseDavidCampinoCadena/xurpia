@@ -2,16 +2,18 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "Backend for Xurpia application",
-  "main": "dist/main.js",
-  "scripts": {
+  "main": "dist/main.js",  "scripts": {
     "build": "nest build",
-    "format": "prettier --write \"src//*.ts\"",
+    "format": "prettier --write \"src/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
+    "postbuild": "npx prisma generate",
+    "deploy": "npm run build && npm run start:prod",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio"
   },
   "keywords": [],

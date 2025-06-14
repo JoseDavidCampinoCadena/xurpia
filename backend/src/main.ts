@@ -10,13 +10,16 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: ['error', 'warn'],
   });
+    // Enable CORS with environment-specific origins
+  const allowedOrigins = process.env.NODE_ENV === 'production' 
+    ? [process.env.FRONTEND_URL || 'https://your-app.vercel.app']
+    : ['http://localhost:3000'];
   
-  // Enable CORS with specific origin
   app.enableCors({
-    origin: 'http://localhost:3000',
+    origin: allowedOrigins,
     credentials: true,
   });
-  console.log('✅ CORS enabled for frontend at http://localhost:3000');
+  console.log(`✅ CORS enabled for origins: ${allowedOrigins.join(', ')}`);
 
   // Enable validation pipes
   app.useGlobalPipes(new ValidationPipe());
