@@ -51,4 +51,14 @@ export const aiConversationApi = {
     const { data } = await axios.post(`/ai-conversations/${conversationId}/rename`, { title });
     return data;
   },
+  // Test endpoint for debugging
+  testConnection: async (): Promise<{ status: string; message: string }> => {
+    try {
+      const { data } = await axios.get('/ai-conversations/health');
+      return data;
+    } catch (error) {
+      console.error('Connection test failed:', error);
+      throw error;
+    }
+  },
 };

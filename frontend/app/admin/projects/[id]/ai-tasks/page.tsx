@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { aiTasksApi, AITask } from '@/app/api/ai-tasks.api';
-import { skillAssessmentsApi, SkillAssessment } from '@/app/api/skill-assessments.api';
+import { skillAssessmentsApi, SkillAssessment, SkillQuestion } from '@/app/api/skill-assessments.api';
 import { 
   FaBrain, 
   FaRobot, 
@@ -56,7 +56,7 @@ export default function AITasksPage() {
   // New state for skill assessments
   const [activeTab, setActiveTab] = useState<'tasks' | 'assessments'>('tasks');
   const [assessments, setAssessments] = useState<SkillAssessment[]>([]);
-
+  const [assessmentQuestions, setAssessmentQuestions] = useState<SkillQuestion[]>([]);
   const [loadingAssessments, setLoadingAssessments] = useState(false);
 
   const loadAITasks = useCallback(async () => {
@@ -84,10 +84,11 @@ export default function AITasksPage() {
       setLoadingAssessments(false);
     }
   }, [projectId]);
+
   const loadAssessmentQuestions = useCallback(async () => {
     try {
-      // Assessment questions are managed by the backend service
-      console.log('Assessment questions loaded for project:', projectId);
+      const questions = await skillAssessmentsApi.getQuestions(projectId);
+      setAssessmentQuestions(questions);
     } catch (err) {
       console.error('Error loading assessment questions:', err);
     }
@@ -117,42 +118,105 @@ export default function AITasksPage() {
     } finally {
       setIsGenerating(false);
     }
-  };
-
-  const startTask = async (taskId: number) => {
+  };  const startTask = async (taskId: number) => {
     try {
-      await aiTasksApi.start(taskId);
+      const result = await aiTasksApi.start(taskId);
       await loadAITasks();
-    } catch (err) {
+      
+      // Show success message with details
+      if (result.message) {
+        alert(`✅ ${result.message}
+        
+📅 Fecha límite estimada: ${result.estimatedDelivery}
+
+La tarea ahora aparece en tu lista personal de tareas (/home/tasks) donde puedes hacer seguimiento de tu progreso.`);
+      } else {
+        alert('Tarea iniciada exitosamente. Revisa tu lista personal de tareas para hacer seguimiento.');
+      }    } catch (err: unknown) {
       console.error('Error starting task:', err);
+      
+      // Show specific error messages
+      let errorMessage = 'Error al iniciar la tarea.';
+      
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosError = err as { response?: { status?: number; data?: { message?: string } }; message?: string };
+        
+        if (axiosError.response?.status === 500) {
+          const errorText = axiosError.response?.data?.message || axiosError.message || '';
+          
+          if (errorText.includes('Task not found')) {
+            errorMessage = 'La tarea no fue encontrada. Puede que haya sido eliminada.';
+          } else if (errorText.includes('not assigned to user')) {
+            errorMessage = 'Esta tarea no está asignada a ti. Solo puedes iniciar tareas que te han sido asignadas.';
+          } else if (errorText.includes('permission')) {
+            errorMessage = 'No tienes permisos para iniciar esta tarea.';
+          } else if (errorText.includes('assigned to another user')) {
+            errorMessage = 'Esta tarea está asignada a otro usuario.';
+          } else {
+            errorMessage = `Error del servidor: ${errorText}`;
+          }
+        } else if (axiosError.response?.status === 401) {
+          errorMessage = 'No estás autenticado. Por favor, inicia sesión nuevamente.';
+        } else if (axiosError.response?.status === 403) {
+          errorMessage = 'No tienes permisos para realizar esta acción.';
+        }
+      }
+      
+      alert(`❌ ${errorMessage}\n\nSi el problema persiste, contacta al administrador del proyecto.`);
     }
   };
-
   const completeTask = async (taskId: number) => {
     try {
-      await aiTasksApi.complete(taskId);
+      const result = await aiTasksApi.complete(taskId);
       await loadAITasks();
+      
+      // Show success message
+      if (result.message) {
+        alert(`✅ ${result.message}`);
+      } else {
+        alert('Tarea completada exitosamente. Tu progreso ha sido actualizado.');
+      }
     } catch (err) {
       console.error('Error completing task:', err);
+      alert('Error al completar la tarea. Por favor, inténtalo de nuevo.');
     }
-  };
-
-  const assignDailyTasks = async () => {
+  };  const assignDailyTasks = async () => {
     try {
       setIsAssigning(true);
       setError(null);
       const result = await aiTasksApi.assignDailyTasks(projectId);
       
       await loadAITasks();
-      alert(`¡Asignación completada! Se asignaron ${result.assignedTasks} tareas automáticamente.`);
+      
+      // Show detailed assignment results
+      if (result.assignments && result.assignments.length > 0) {
+        const assignmentDetails = result.assignments
+          .map(a => `• ${a.taskTitle} (${a.skillLevel}) → ${a.assigneeName} (Día ${a.dayNumber})`)
+          .join('\n');
+        
+        alert(`¡Asignación inteligente completada! 🎯
+
+${result.message}
+
+Asignaciones realizadas:
+${assignmentDetails}
+
+Las tareas se han asignado considerando:
+✓ Nivel de habilidad de cada usuario
+✓ Máximo 1 tarea por usuario por día
+✓ Balance de carga de trabajo
+✓ Evaluaciones de competencias`);
+      } else {
+        alert(result.message || `Se procesaron ${result.assignedTasks} tareas.`);
+      }
     } catch (err) {
       setError('Error al asignar tareas automáticamente');
       console.error('Error assigning daily tasks:', err);
+      alert('Error al asignar tareas. Por favor, revisa la consola para más detalles.');
     } finally {
       setIsAssigning(false);
     }
   };
-
   const reassignTasksBasedOnSkills = async () => {
     try {
       setIsAssigning(true);
@@ -160,10 +224,20 @@ export default function AITasksPage() {
       const result = await skillAssessmentsApi.reassignTasks(projectId);
       
       await loadAITasks();
-      alert(`¡Reasignación completada! ${result.message}`);
+      alert(`¡Reasignación completada! 🎯
+
+${result.message}
+
+Se han reasignado ${result.assignedTasks} tareas basándose en:
+✓ Evaluaciones de habilidades completadas
+✓ Nivel de competencia de cada colaborador
+✓ Matching inteligente tarea-usuario
+
+Las tareas aparecerán en la lista personal de cada colaborador cuando las inicien.`);
     } catch (err) {
       setError('Error al reasignar tareas basadas en habilidades');
       console.error('Error reassigning tasks:', err);
+      alert('Error al reasignar tareas. Asegúrate de que hay evaluaciones completadas.');
     } finally {
       setIsAssigning(false);
     }
@@ -376,12 +450,59 @@ export default function AITasksPage() {
               )}
             </button>
           </div>
-        </div>
-
-        {error && (
+        </div>        {error && (
           <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-4 mb-6 flex items-center gap-3">
             <FaExclamationTriangle className="text-red-400 w-5 h-5" />
             <span className="text-red-200">{error}</span>
+          </div>
+        )}        {/* Smart Assignment Info */}
+        {activeTab === 'tasks' && aiTasks.length > 0 && (
+          <div className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-blue-500/30 rounded-2xl p-6 mb-8">
+            <div className="flex items-start gap-4">
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-xl">
+                <FaBrain className="text-white w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                  🎯 Sistema de Asignación Inteligente
+                </h3>
+                <p className="text-blue-200 mb-4">
+                  Nuestro sistema asigna tareas automáticamente considerando múltiples factores para optimizar el rendimiento del equipo.
+                </p>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-blue-100 flex items-center gap-2">
+                      <FaUserGraduate className="w-4 h-4" />
+                      Factores de Asignación:
+                    </h4>
+                    <ul className="text-sm text-blue-200 space-y-1 ml-6">
+                      <li>• Nivel de habilidad del usuario</li>
+                      <li>• Evaluaciones de competencias</li>
+                      <li>• Experiencia en tecnologías</li>
+                      <li>• Carga de trabajo actual</li>
+                    </ul>
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-blue-100 flex items-center gap-2">
+                      <FaClock className="w-4 h-4" />
+                      Límites Inteligentes:
+                    </h4>
+                    <ul className="text-sm text-blue-200 space-y-1 ml-6">
+                      <li>• Máximo 1 tarea por usuario/día</li>
+                      <li>• Priorización por día de proyecto</li>
+                      <li>• Balance automático de carga</li>
+                      <li>• Asignación progresiva por dificultad</li>
+                    </ul>
+                  </div>
+                </div>
+                <div className="mt-4 p-4 bg-green-500/20 border border-green-500/30 rounded-lg">
+                  <div className="flex items-center gap-2 text-green-200 text-sm">
+                    <FaCheck className="w-4 h-4" />
+                    <strong>Nuevo:</strong> Las tareas sin asignar se asignan automáticamente al usuario que las inicia
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -529,25 +650,39 @@ export default function AITasksPage() {
                       <FaTasks className="text-green-400" />
                       Tareas ({filteredTasks.length})
                     </h3>
-                    
-                    {aiTasks.some(task => !task.assignee) && (
-                      <button
-                        onClick={assignDailyTasks}
-                        disabled={isAssigning}
-                        className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center gap-2 disabled:opacity-50 text-sm"
-                      >
-                        {isAssigning ? (
-                          <>
-                            <FaSpinner className="animate-spin w-4 h-4" />
-                            Asignando...
-                          </>
-                        ) : (
-                          <>
-                            <FaUser className="w-4 h-4" />
-                            Auto-Asignar
-                          </>
-                        )}
-                      </button>
+                      {aiTasks.some(task => !task.assignee) && (
+                      <div className="relative group">
+                        <button
+                          onClick={assignDailyTasks}
+                          disabled={isAssigning}
+                          className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center gap-2 disabled:opacity-50 text-sm"
+                        >
+                          {isAssigning ? (
+                            <>
+                              <FaSpinner className="animate-spin w-4 h-4" />
+                              Asignando...
+                            </>
+                          ) : (
+                            <>
+                              <FaUser className="w-4 h-4" />
+                              Asignación Inteligente
+                            </>
+                          )}
+                        </button>
+                        
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-10">
+                          <div className="bg-gray-900 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap shadow-lg border border-gray-600">
+                            <div className="text-center">
+                              <p className="font-semibold mb-1">🎯 Asignación Inteligente</p>
+                              <p>✓ Considera nivel de habilidades</p>
+                              <p>✓ Máximo 1 tarea por día</p>
+                              <p>✓ Balance de carga</p>
+                            </div>
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                          </div>
+                        </div>
+                      </div>
                     )}
                   </div>
 
@@ -579,30 +714,41 @@ export default function AITasksPage() {
                               
                               <h4 className="text-lg font-semibold text-white mb-2">{task.title}</h4>
                               <p className="text-gray-300 mb-3">{task.description}</p>
-                              
-                              <div className="flex items-center gap-4 text-sm text-gray-400">
+                                <div className="flex items-center gap-4 text-sm text-gray-400">
                                 <div className="flex items-center gap-2">
                                   <FaClock />
                                   <span>Estimado: {task.estimatedHours}h</span>
                                 </div>
-                                {task.assignee && (
+                                {task.assignee ? (
                                   <div className="flex items-center gap-2">
                                     <FaUser />
                                     <span>Asignado: {task.assignee.name}</span>
                                   </div>
+                                ) : (
+                                  <div className="flex items-center gap-2 text-yellow-400">
+                                    <FaUser />
+                                    <span>Sin asignar</span>
+                                  </div>
                                 )}
                               </div>
                             </div>
-                            
-                            <div className="flex gap-2 ml-4">
+                              <div className="flex gap-2 ml-4">
                               {task.status === 'PENDING' && (
-                                <button
-                                  onClick={() => startTask(task.id)}
-                                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center gap-2"
-                                >
-                                  <FaPlay className="w-4 h-4" />
-                                  Iniciar
-                                </button>
+                                <div className="flex flex-col items-end gap-2">
+                                  {!task.assignee && (
+                                    <span className="text-xs text-yellow-400 px-2 py-1 bg-yellow-400/20 rounded-full">
+                                      Se asignará automáticamente
+                                    </span>
+                                  )}
+                                  <button
+                                    onClick={() => startTask(task.id)}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center gap-2"
+                                    title={!task.assignee ? "Esta tarea se te asignará automáticamente al iniciarla" : "Iniciar tarea asignada"}
+                                  >
+                                    <FaPlay className="w-4 h-4" />
+                                    Iniciar
+                                  </button>
+                                </div>
                               )}
                               
                               {task.status === 'IN_PROGRESS' && (
@@ -613,6 +759,13 @@ export default function AITasksPage() {
                                   <FaCheck className="w-4 h-4" />
                                   Completar
                                 </button>
+                              )}
+                              
+                              {task.status === 'COMPLETED' && (
+                                <span className="text-green-400 px-4 py-2 rounded-lg font-medium flex items-center gap-2">
+                                  <FaCheck className="w-4 h-4" />
+                                  Completada
+                                </span>
                               )}
                             </div>
                           </div>

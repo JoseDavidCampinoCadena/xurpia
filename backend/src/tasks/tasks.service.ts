@@ -163,7 +163,6 @@ export class TasksService {
 
     return task;
   }
-
   async update(userId: number, id: number, dto: UpdateTaskDto) {
     const task = await this.findOne(userId, id);
 
@@ -178,7 +177,7 @@ export class TasksService {
       throw new ForbiddenException('You cannot update this task');
     }
 
-    return this.prisma.task.update({
+    const updatedTask = await this.prisma.task.update({
       where: { id },
       data: {
         ...dto,
@@ -199,6 +198,37 @@ export class TasksService {
         },
       },
     });
+
+    // If this is an AI task being completed, also complete the corresponding AI task
+    if (dto.status === 'COMPLETED' && task.title.startsWith('[IA]')) {
+      try {
+        const aiTaskTitle = task.title.replace('[IA] ', '');
+        const correspondingAiTask = await this.prisma.aITask.findFirst({
+          where: {
+            title: aiTaskTitle,
+            projectId: task.projectId,
+            assigneeId: userId,
+            status: { not: 'COMPLETED' }
+          }
+        });
+
+        if (correspondingAiTask) {
+          await this.prisma.aITask.update({
+            where: { id: correspondingAiTask.id },
+            data: {
+              status: 'COMPLETED',
+              completedAt: new Date()
+            }
+          });
+          console.log(`✅ Synchronized AI task completion: ${aiTaskTitle}`);
+        }
+      } catch (error) {
+        console.error('Error synchronizing AI task completion:', error);
+        // Don't throw error, just log it - the regular task update should still succeed
+      }
+    }
+
+    return updatedTask;
   }
   async remove(userId: number, id: number) {
     const task = await this.findOne(userId, id);

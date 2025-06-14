@@ -25,6 +25,54 @@ export interface AITask {
   } | null;
 }
 
+export interface RegularTask {
+  id: number;
+  title: string;
+  description?: string;
+  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
+  projectId: number;
+  assigneeId: number;
+  createdAt: string;
+  updatedAt: string;
+  assignee?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  project?: {
+    id: number;
+    name: string;
+  };
+}
+
+export interface TaskStartResult {
+  aiTask: AITask;
+  regularTask: RegularTask;
+  message: string;
+  estimatedDelivery: string;
+}
+
+export interface TaskCompleteResult {
+  aiTask: AITask;
+  regularTask: RegularTask | null;
+  message: string;
+}
+
+export interface TaskAssignment {
+  taskId: number;
+  taskTitle: string;
+  assigneeName: string;
+  dayNumber: number;
+  skillLevel: string;
+  assigneeRole?: string;
+}
+
+export interface AssignDailyTasksResult {
+  message: string;
+  assignedTasks: number;
+  assignments: TaskAssignment[];
+}
+
 export interface ProjectProgress {
   projectId: number;
   totalAiTasks: number;
@@ -57,16 +105,14 @@ export const aiTasksApi = {
   // Get assigned AI tasks for current user
   getAssigned: async (projectId?: number): Promise<AITask[]> => {
     return aiTasksApi.getAll(projectId, true);
-  },
-
-  // Complete an AI task
-  complete: async (taskId: number): Promise<AITask> => {
+  },  // Complete an AI task
+  complete: async (taskId: number): Promise<TaskCompleteResult> => {
     const response = await axios.post(`/ai-tasks/${taskId}/complete`);
     return response.data;
   },
 
   // Start an AI task
-  start: async (taskId: number): Promise<AITask> => {
+  start: async (taskId: number): Promise<TaskStartResult> => {
     const response = await axios.post(`/ai-tasks/${taskId}/start`);
     return response.data;
   },
@@ -83,7 +129,7 @@ export const aiTasksApi = {
   },
 
   // Assign daily tasks automatically
-  assignDailyTasks: async (projectId: number): Promise<{ message: string; assignedTasks: number; assignments: any[] }> => {
+  assignDailyTasks: async (projectId: number): Promise<AssignDailyTasksResult> => {
     const response = await axios.post(`/ai-tasks/assign-daily-tasks/${projectId}`);
     return response.data;
   },

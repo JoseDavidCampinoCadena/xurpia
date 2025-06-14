@@ -3,8 +3,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { skillAssessmentsApi } from '@/app/api/skill-assessments.api';
-import { projectsApi } from '@/app/api/projects.api';
-import { useAuth } from '@/app/hooks/useAuth';
 import { FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
 
 interface SkillAssessmentCheckProps {
@@ -14,31 +12,13 @@ interface SkillAssessmentCheckProps {
 export default function SkillAssessmentCheck({ children }: SkillAssessmentCheckProps) {
   const params = useParams();
   const router = useRouter();
-  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [hasAssessment, setHasAssessment] = useState(false);
-  const [isProjectOwner, setIsProjectOwner] = useState(false);  const checkAssessment = useCallback(async () => {
+  const [hasAssessment, setHasAssessment] = useState(false);const checkAssessment = useCallback(async () => {
     try {
       const projectId = parseInt(params.id as string);
       
-      // First, check if the current user is the project owner
-      if (user) {
-        try {
-          const project = await projectsApi.getById(projectId);
-          if (project.ownerId === user.id) {
-            console.log('User is project owner, skipping skill assessment');
-            setIsProjectOwner(true);
-            setHasAssessment(true); // Allow access without assessment
-            return;
-          }
-        } catch (projectError) {
-          console.error('Error fetching project:', projectError);
-          // Continue with assessment check if project fetch fails
-        }
-      }
-      
-      // If not project owner, check for existing assessment
+      // Check for existing assessment - let skill assessment page handle owner exemption
       const assessment = await skillAssessmentsApi.getUserAssessment(projectId);
       
       if (!assessment) {
@@ -62,7 +42,7 @@ export default function SkillAssessmentCheck({ children }: SkillAssessmentCheckP
     } finally {
       setLoading(false);
     }
-  }, [params.id, router, user]);
+  }, [params.id, router]);
 
   useEffect(() => {
     checkAssessment();

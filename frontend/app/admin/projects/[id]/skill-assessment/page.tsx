@@ -3,6 +3,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { skillAssessmentsApi, SkillQuestion, AssessmentResult } from '@/app/api/skill-assessments.api';
+import { useAuth } from '@/app/hooks/useAuth';
+import { useProjects } from '@/app/hooks/useProjects';
+import { getUserPermissions } from '@/app/utils/permissions';
 import { 
   FaBrain, 
   FaSpinner, 
@@ -16,7 +19,11 @@ import {
 export default function SkillAssessmentPage() {
   const params = useParams();
   const router = useRouter();
+  const { user, loading: userLoading } = useAuth();
+  const { projects, loading: projectsLoading } = useProjects();
+  
   const projectId = parseInt(params.id as string);
+  const project = projects.find((p) => p.id === projectId);
   
   const [questions, setQuestions] = useState<SkillQuestion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +33,20 @@ export default function SkillAssessmentPage() {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<AssessmentResult | null>(null);
   const [timeLeft, setTimeLeft] = useState(30 * 60); // 30 minutes
-  const [hasStarted, setHasStarted] = useState(false);  const loadQuestions = useCallback(async () => {
+  const [hasStarted, setHasStarted] = useState(false);
+
+  // Redirect owners to dashboard (safety check)
+  useEffect(() => {
+    if (!userLoading && !projectsLoading && user && project) {
+      const isOwner = getUserPermissions(user, project).isOwner;
+      if (isOwner) {
+        router.push(`/admin/projects/${projectId}`);
+        return;
+      }
+    }
+  }, [user, project, userLoading, projectsLoading, router, projectId]);
+
+  const loadQuestions = useCallback(async () => {
     try {
       setLoading(true);
       const assessmentQuestions = await skillAssessmentsApi.getQuestions(projectId);
@@ -51,10 +71,6 @@ export default function SkillAssessmentPage() {
       setSubmitting(false);
     }
   }, [projectId, answers]);
-
-  useEffect(() => {
-    loadQuestions();
-  }, [loadQuestions]);
 
   useEffect(() => {
     if (hasStarted && timeLeft > 0 && !submitted) {
@@ -109,8 +125,9 @@ export default function SkillAssessmentPage() {
       case 'Avanzado': return 'bg-red-500/20 border-red-500/50';
       default: return 'bg-gray-500/20 border-gray-500/50';
     }
-  };
-
+  };  useEffect(() => {
+    loadQuestions();
+  }, [loadQuestions]);
   if (loading) {
     return (
       <div className="min-h-screen p-6 flex items-center justify-center">

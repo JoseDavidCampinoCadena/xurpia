@@ -24,16 +24,18 @@ export default function AIConversationPage() {
   const [conversations, setConversations] = useState<AIConversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<AIConversation | null>(null);
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [loadingConversations, setLoadingConversations] = useState(true);
+  const [loading, setLoading] = useState(false);  const [loadingConversations, setLoadingConversations] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [wantsNewConversation, setWantsNewConversation] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);  const loadConversations = useCallback(async () => {
     try {
       setLoadingConversations(true);
       const data = await aiConversationApi.getAllConversations();
       setConversations(data);
-      if (data.length > 0 && !activeConversation) {
+      
+      // Only set active conversation if user doesn't want a new conversation
+      if (data.length > 0 && !activeConversation && !wantsNewConversation) {
         setActiveConversation(data[0]);
       }
     } catch (error) {
@@ -42,13 +44,25 @@ export default function AIConversationPage() {
     } finally {
       setLoadingConversations(false);
     }
-  }, [activeConversation]);
-
+  }, [activeConversation, wantsNewConversation]);
   useEffect(() => {
     if (user) {
+      // Test backend connection first
+      testBackendConnection();
       loadConversations();
     }
   }, [user, loadConversations]);
+
+  const testBackendConnection = async () => {
+    try {
+      console.log('🔍 Testing backend connection...');
+      const result = await aiConversationApi.testConnection();
+      console.log('✅ Backend connection successful:', result);
+    } catch (error) {
+      console.error('❌ Backend connection failed:', error);
+      setError('No se puede conectar con el servidor. Verifica que el backend esté ejecutándose.');
+    }
+  };
 
   useEffect(() => {
     scrollToBottom();
@@ -57,7 +71,6 @@ export default function AIConversationPage() {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
 
@@ -66,13 +79,17 @@ export default function AIConversationPage() {
     const messageContent = input;
     setInput("");
 
+    console.log("Sending message:", messageContent);
+    console.log("Active conversation ID:", activeConversation?.id);
+
     try {
       const result = await aiConversationApi.sendMessage(
         messageContent, 
         activeConversation?.id
-      );
+      );      console.log("Received result:", result);
 
       setActiveConversation(result.conversation);
+      setWantsNewConversation(false); // Reset the flag when conversation is created
       
       // Update conversations list
       const updatedConversations = conversations.map(conv => 
@@ -88,14 +105,23 @@ export default function AIConversationPage() {
     } catch (error) {
       console.error("Error sending message:", error);
       setError("Error al enviar el mensaje");
+      // Restore input if there's an error
+      setInput(messageContent);
     } finally {
       setLoading(false);
     }
-  };
-
-  const startNewConversation = () => {
+  };  const startNewConversation = () => {
+    console.log("Starting new conversation - clearing active conversation");
     setActiveConversation(null);
+    setWantsNewConversation(true);
     setSidebarOpen(false);
+    setError(null);
+    setInput("");
+    
+    // Force a re-render to show the welcome screen
+    setTimeout(() => {
+      console.log("New conversation state set, activeConversation:", null);
+    }, 100);
   };
 
   const deleteConversation = async (conversationId: string) => {
@@ -170,12 +196,10 @@ export default function AIConversationPage() {
             >
               <FaTimes className="w-5 h-5" />
             </button>
-          </div>
-
-          {/* New Conversation Button */}
+          </div>          {/* New Conversation Button */}
           <div className="p-4">            <button
               onClick={startNewConversation}
-              className="w-full bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-black px-4 py-3 rounded-xl font-medium transition-all duration-300 flex items-center gap-3"
+              className="w-full bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-black px-4 py-3 rounded-xl font-medium transition-all duration-300 flex items-center gap-3 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
             >
               <FaPlus className="w-4 h-4" />
               Nueva Conversación
@@ -198,11 +222,11 @@ export default function AIConversationPage() {
               <div className="space-y-2">
                 {conversations.map((conversation) => (
                   <div
-                    key={conversation.id}
-                    onClick={() => {
+                    key={conversation.id}                    onClick={() => {
                       setActiveConversation(conversation);
+                      setWantsNewConversation(false); // Reset when selecting existing conversation
                       setSidebarOpen(false);
-                    }}                    className={`group p-3 rounded-lg cursor-pointer transition-all duration-200 ${
+                    }}className={`group p-3 rounded-lg cursor-pointer transition-all duration-200 ${
                       activeConversation?.id === conversation.id
                         ? 'bg-green-500/20 border border-green-400/50'
                         : 'hover:bg-gray-700/50'
@@ -263,10 +287,14 @@ export default function AIConversationPage() {
               >
                 <FaBars className="w-5 h-5" />
               </button>              <div className="flex items-center gap-3">
-                <HiSparkles className="w-6 h-6 text-green-400" />
-                <h2 className="text-xl font-bold text-white">
+                <HiSparkles className="w-6 h-6 text-green-400" />                <h2 className="text-xl font-bold text-white">
                   {activeConversation ? activeConversation.title : 'Nueva Conversación'}
                 </h2>
+                {!activeConversation && (
+                  <span className="ml-2 px-2 py-1 bg-green-500 text-black text-xs rounded-full">
+                    NUEVA
+                  </span>
+                )}
               </div>
             </div>
             {activeConversation && (

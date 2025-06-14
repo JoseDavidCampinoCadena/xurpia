@@ -5,14 +5,13 @@ import axios from 'axios';
 export class AiService {
   // Use more reliable and current models
   private HF_API_KEY = process.env.HF_TOKEN || process.env.HF_API_KEY;
-  
-  // Use better models that are more likely to be available
+    // Use better models that are more likely to be available
   private WORKING_MODELS = [
-    'mistralai/Mistral-7B-Instruct-v0.1',
     'microsoft/DialoGPT-medium',
-    'HuggingFaceH4/zephyr-7b-beta',
+    'microsoft/DialoGPT-small',
+    'google/flan-t5-small',
     'google/flan-t5-base',
-    'microsoft/DialoGPT-small'
+    'huggingface/CodeBERTa-small-v1'
   ];
   async generateQuestions(tech: string) {
     // Ejemplo de prompt para generación de preguntas
@@ -69,30 +68,44 @@ export class AiService {
     for (const modelUrl of modelsToTry) {
       try {
         console.log(`Trying AI model: ${modelUrl}`);
-        
-        const response = await axios.post(
+          const response = await axios.post(
           modelUrl,
           { 
             inputs: prompt,
             parameters: {
-              max_new_tokens: 256,
+              max_length: 200,
               temperature: 0.7,
-              return_full_text: false
+              do_sample: true,
+              top_p: 0.9
             }
           },
           { 
-            headers: { Authorization: `Bearer ${this.HF_API_KEY}` },
-            timeout: 10000, // 10 seconds timeout
-            validateStatus: (status) => status < 500 // Accept 4xx as valid responses to get error details
+            headers: { 
+              'Authorization': `Bearer ${this.HF_API_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            timeout: 15000, // 15 seconds timeout
+            validateStatus: (status) => status < 500
           }
-        );
-
-        if (response.data && Array.isArray(response.data) && response.data[0]?.generated_text) {
+        );        if (response.data && Array.isArray(response.data) && response.data[0]?.generated_text) {
           console.log(`✅ AI model ${modelUrl} succeeded`);
-          return response.data[0].generated_text;
+          return response.data[0].generated_text.trim();
         } else if (response.data && response.data.generated_text) {
           console.log(`✅ AI model ${modelUrl} succeeded`);
-          return response.data.generated_text;
+          return response.data.generated_text.trim();
+        } else if (response.data && typeof response.data === 'string') {
+          console.log(`✅ AI model ${modelUrl} succeeded (string response)`);
+          return response.data.trim();
+        } else if (response.data && Array.isArray(response.data) && response.data[0]) {
+          // Handle different response formats
+          const result = response.data[0];
+          if (typeof result === 'string') {
+            console.log(`✅ AI model ${modelUrl} succeeded (array string)`);
+            return result.trim();
+          } else if (result.text) {
+            console.log(`✅ AI model ${modelUrl} succeeded (text field)`);
+            return result.text.trim();
+          }
         } else {
           console.warn(`Unexpected API response format from ${modelUrl}:`, response.data);
           continue; // Try next model
