@@ -10,16 +10,35 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: ['error', 'warn'],
   });
-    // Enable CORS with environment-specific origins
-  const allowedOrigins = process.env.NODE_ENV === 'production' 
-    ? [process.env.FRONTEND_URL || 'https://your-app.vercel.app']
-    : ['http://localhost:3000'];
+    // Enable CORS with specific origins for development and production
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'https://xurpia.vercel.app',
+    /\.vercel\.app$/
+  ];
   
   app.enableCors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      // Check if the origin is allowed
+      const isAllowed = allowedOrigins.some(allowedOrigin => {
+        if (typeof allowedOrigin === 'string') {
+          return allowedOrigin === origin;
+        }
+        return allowedOrigin.test(origin);
+      });
+      
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   });
-  console.log(`✅ CORS enabled for origins: ${allowedOrigins.join(', ')}`);
+  console.log('✅ CORS enabled for multiple origins including Vercel');
 
   // Enable validation pipes
   app.useGlobalPipes(new ValidationPipe());
@@ -44,16 +63,15 @@ async function bootstrap() {
 
   // Servir archivos estáticos de /uploads
   app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
-
   const port = process.env.PORT || 3001;
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   console.log(`
-🚀 Server is running on: http://localhost:${port}
-📝 API Documentation: http://localhost:${port}/api
+🚀 Server is running on: http://0.0.0.0:${port}
+📝 API Documentation: http://0.0.0.0:${port}/api
 ⚡ Environment: ${process.env.NODE_ENV || 'development'}
 🔐 Authentication endpoints:
-   POST http://localhost:${port}/auth/register
-   POST http://localhost:${port}/login
+   POST http://0.0.0.0:${port}/auth/register
+   POST http://0.0.0.0:${port}/login
   `);
 }
 bootstrap();
