@@ -25,4 +25,4 @@ RUN npm run build
 EXPOSE 3001
 
 # Start the application with migrations
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
