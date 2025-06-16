@@ -1,26 +1,25 @@
 # Use the official Node.js 20 runtime as a parent image
 FROM node:20-alpine
 
+# Install necessary packages
+RUN apk add --no-cache python3 make g++
+
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json (if available)
+# Copy package.json and package-lock.json
 COPY package*.json ./
+COPY prisma ./prisma/
 
-# Install all dependencies (including dev dependencies for build)
-RUN npm ci
+# Install dependencies
+RUN npm install
 
 # Copy the rest of the application code
 COPY . .
 
-# Generate Prisma client
+# Generate Prisma client and build
 RUN npx prisma generate
-
-# Build the application
 RUN npm run build
-
-# Remove dev dependencies
-RUN npm prune --production
 
 # Expose the port the app runs on
 EXPOSE 3001
