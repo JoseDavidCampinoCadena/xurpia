@@ -21,6 +21,10 @@ COPY . .
 RUN npx prisma generate
 RUN npm run build
 
+# Debug: List contents of dist directory
+RUN ls -la dist/ || echo "dist directory not found"
+RUN find . -name "*.js" -type f | head -20
+
 # Expose the port the app runs on
 EXPOSE 3001
 
